@@ -63,7 +63,7 @@ export default function MordieFuggiApp() {
   }, [isAdminAuthenticated]);
 
   const fetchPiatti = async () => {
-    const { data } = await supabase.from('piatti').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('piatti').select('*');
     if (data) setPiattiGiorno(data);
   };
 
