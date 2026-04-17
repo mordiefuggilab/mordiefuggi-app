@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 
 // --- CONFIGURAZIONE ---
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvqjifmulwtdmmaqsxom.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2cWppZm11bHd0ZG1tYXFzeG9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMzM2NDYsImV4cCI6MjA5MDgwOTY0Nn0.Zo94L4yyn7GxgEfY9Fd2owm_vLFfru2O42HwBDMlZZk';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const LISTA_ALLERGENI = ["Glutine", "Lattosio", "Uova", "Frutta a guscio", "Pesce", "Crostacei", "Soia", "Sedano", "Senape", "Arachidi"];
 const TUO_NUMERO_WHATSAPP = "393760815909";
 const LINK_MAPPA_RISTORANTE = "https://www.google.com/maps/place/Mordi+e+Fuggi+%7C+Tavola+Calda+Pinseria/@40.3419837,18.156145,17z/data=!3m1!4b1!4m6!3m5!1s0x13442f248ad1542b:0xe46d945aa4373575!8m2!3d40.3419796!4d18.1587199!16s%2Fg%2F11clyz3d31?entry=ttu&g_ep=EgoyMDI2MDQwOC4wIKXMDSoASAFQAw%3D%3D";
