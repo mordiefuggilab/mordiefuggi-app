@@ -406,7 +406,24 @@ export default function MordieFuggiApp() {
             <div className="bg-white rounded-[2rem] p-6 space-y-4 shadow-sm">
               <input type="text" placeholder="Nome" className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" value={userData.nome} onChange={(e) => setUserData({...userData, nome: e.target.value})} />
               <input type="tel" placeholder="Cellulare" className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" value={userData.telefono} onChange={(e) => setUserData({...userData, telefono: e.target.value})} />
-              <select className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none appearance-none" value={userData.orario} onChange={(e) => setUserData({...userData, orario: e.target.value})}><option value="">Orario Ritiro</option>{getOrariDisponibili().map(ora => (<option key={ora} value={ora}>{ora}</option>))}</select>
+              {getOrariDisponibili().length > 0 ? (
+  <select 
+    className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none appearance-none" 
+    value={userData.orario} 
+    onChange={(e) => setUserData({...userData, orario: e.target.value})}
+  >
+    <option value="">Orario Ritiro</option>
+    {getOrariDisponibili().map(ora => (
+      <option key={ora} value={ora}>{ora}</option>
+    ))}
+  </select>
+) : (
+  <div className="w-full p-4 bg-red-50 border border-red-100 rounded-xl text-center">
+    <p className="text-red-600 font-black text-[10px] uppercase italic">
+      Ritiro non disponibile oggi
+    </p>
+  </div>
+)}
               <div className="flex gap-3 text-left items-center"><input type="checkbox" className="w-5 h-5" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} /><p className="text-[10px] text-gray-400 font-bold uppercase italic leading-tight">Autorizzo il trattamento dati.</p></div>
             </div>
             <button onClick={async () => { 
