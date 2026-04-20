@@ -37,7 +37,7 @@ export default function MordieFuggiApp() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginPass, setLoginPass] = useState("");
 
-  const [userData, setUserData] = useState({ nome: '', telefono: '', orario: '' });
+  const [userData, setUserData] = useState({ nome: '', telefono: '', orario: '', note: '' });
   const [newPiatto, setNewPiatto] = useState({ nome: '', prezzo: '', categoria: 'Primi', stock: 10, immagine: '🥘', allergeni: [] });
   
   const [candidatura, setCandidatura] = useState({ nome: '', telefono: '', messaggio: '' });
@@ -424,13 +424,19 @@ export default function MordieFuggiApp() {
     </p>
   </div>
 )}
+<textarea 
+                placeholder="Note (es. quantità al peso o variazioni...)" 
+                className="w-full p-4 bg-white rounded-xl font-bold outline-none resize-none h-24 text-sm" 
+                value={userData.note} 
+                onChange={(e) => setUserData({...userData, note: e.target.value})} 
+              />
               <div className="flex gap-3 text-left items-center"><input type="checkbox" className="w-5 h-5" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} /><p className="text-[10px] text-gray-400 font-bold uppercase italic leading-tight">Autorizzo il trattamento dati.</p></div>
             </div>
             <button onClick={async () => { 
               await supabase.from('ordini').insert([{ cliente: userData.nome, telefono: userData.telefono, orario: userData.orario, dettaglio: cart.map(i => `${i.nome} x${i.qty}`).join(', '), totale: cart.reduce((a, b) => a + (b.prezzo * b.qty), 0), stato: 'da_preparare' }]);
               for (const item of cart) { await supabase.from('piatti').update({ stock: item.stock - item.qty }).eq('id', item.id); }
               setOrderPlaced(true);
-              window.open(`https://wa.me/${TUO_NUMERO_WHATSAPP}?text=*ORDINE*%0A👤 ${userData.nome}%0A⏰ ${userData.orario}%0A🛒 ${cart.map(i => `${i.nome} x${i.qty}`).join(', ')}%0A%0A📲 *Invia questo messaggio per confermare!*`, '_blank');
+              window.open(`https://wa.me/${TUO_NUMERO_WHATSAPP}?text=*ORDINE*%0A👤 ${userData.nome}%0A⏰ ${userData.orario}%0A🛒 ${cart.map(i => `${i.nome} x${i.qty}`).join(', ')}${userData.note ? `%0A📝 *NOTE:* ${userData.note}` : ''}%0A%0A📲 *Invia questo messaggio per confermare!*`, '_blank');
             }} disabled={!isFormValid} className={`w-full py-6 rounded-[2.5rem] font-black text-xl uppercase italic shadow-xl transition-all ${isFormValid ? 'bg-[#2E7D32] text-white' : 'bg-gray-300 grayscale opacity-50'}`}>Ordina</button>
           </div>
         ) : (
