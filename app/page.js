@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
   Utensils, ChevronLeft, Plus, Minus, Eye,
-  CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power
+  CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power, TrendingUp, Download
 } from 'lucide-react';
 
 // --- CONFIGURAZIONE ---
@@ -191,6 +191,7 @@ export default function MordieFuggiApp() {
           <button onClick={() => setAdminTab('live')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'live' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><Clock size={14}/> Live</button>
           <button onClick={() => setAdminTab('catering')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'catering' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><ClipboardList size={14}/> Catering</button>
           <button onClick={() => setAdminTab('archivio')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'archivio' ? 'bg-[#C9A97A] text-white shadow-md' : 'text-gray-500'}`}><History size={14}/> Archivio</button>
+          <button onClick={() => setAdminTab('statistiche')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'statistiche' ? 'bg-[#2196F3] text-white shadow-md' : 'text-gray-500'}`}>📊 Stats</button>
         </div>
 
         {adminTab === 'live' && (
@@ -283,6 +284,142 @@ export default function MordieFuggiApp() {
             <div className="flex gap-2"><a href={`https://wa.me/${r.telefono}`} className="flex-1 bg-[#2E7D32] text-white py-2 rounded-xl text-center text-[10px] font-black uppercase">Contatta</a><button onClick={() => supabase.from('richieste_catering').delete().eq('id', r.id).then(fetchCatering)} className="p-2 text-red-400"><Trash2 size={16}/></button></div>
           </div>
         ))}
+        {adminTab === 'statistiche' && (() => {
+  const oggi = new Date();
+  oggi.setHours(0,0,0,0);
+  const inizioSettimana = new Date(oggi);
+  inizioSettimana.setDate(oggi.getDate() - oggi.getDay());
+  const inizioMese = new Date(oggi.getFullYear(), oggi.getMonth(), 1);
+
+  const parseData = (d) => new Date(d);
+
+  const ordiniOggi = ordini.filter(o => parseData(o.created_at) >= oggi);
+  const ordiniSettimana = ordini.filter(o => parseData(o.created_at) >= inizioSettimana);
+  const ordiniMese = ordini.filter(o => parseData(o.created_at) >= inizioMese);
+
+  const incasso = (lista) => lista.reduce((a, o) => a + (parseFloat(o.totale) || 0), 0).toFixed(2);
+
+ // Piatti più ordinati
+const conteggiopiatti = {};
+ordini.forEach(o => {
+  if (!o.dettaglio) return;
+  o.dettaglio.split(/ x\d+,\s*/).forEach((voce, idx, arr) => {
+    const match = voce.match(/^(.+?) x(\d+)$/) || (idx < arr.length - 1 ? [null, voce, '1'] : null);
+    if (!match) return;
+    const nome = match[1].replace(/[\(\)]/g, '').replace(/,\s*$/, '').trim();
+    const qty = parseInt(match[2]) || 1;
+    conteggiopiatti[nome] = (conteggiopiatti[nome] || 0) + qty;
+  });
+});
+const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  // Orario di punta
+  const conteggioOrari = {};
+  ordini.forEach(o => {
+    if (o.orario) conteggioOrari[o.orario] = (conteggioOrari[o.orario] || 0) + 1;
+  });
+  const orarioPunta = Object.entries(conteggioOrari).sort((a,b) => b[1]-a[1])[0];
+
+  // Ultimi 7 giorni
+  const ultimi7 = Array.from({length: 7}, (_, i) => {
+    const d = new Date(oggi);
+    d.setDate(oggi.getDate() - (6 - i));
+    return d;
+  });
+  const ordiniPerGiorno = ultimi7.map(d => {
+    const fine = new Date(d); fine.setHours(23,59,59,999);
+    const count = ordini.filter(o => {
+      const od = parseData(o.created_at);
+      return od >= d && od <= fine;
+    }).length;
+    return { label: d.toLocaleDateString('it-IT', {weekday:'short'}), count };
+  });
+  const maxCount = Math.max(...ordiniPerGiorno.map(g => g.count), 1);
+
+  // Export CSV
+  const exportCSV = () => {
+    const rows = [['Data','Cliente','Telefono','Orario','Dettaglio','Totale','Stato']];
+    ordini.forEach(o => {
+      rows.push([
+        new Date(o.created_at).toLocaleDateString('it-IT'),
+        o.cliente || '', o.telefono || '', o.orario || '',
+        o.dettaglio || '', o.totale || '', o.stato || ''
+      ]);
+    });
+    const csv = rows.map(r => r.join(';')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `ordini_${new Date().toLocaleDateString('it-IT').replace(/\//g,'-')}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Incassi */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Oggi', valore: incasso(ordiniOggi), colore: '#2E7D32' },
+          { label: 'Settimana', valore: incasso(ordiniSettimana), colore: '#C9A97A' },
+          { label: 'Mese', valore: incasso(ordiniMese), colore: '#2196F3' },
+        ].map(item => (
+          <div key={item.label} className="bg-white rounded-[2rem] p-4 text-center shadow-sm">
+            <p className="text-[9px] font-black uppercase text-gray-400 mb-1">{item.label}</p>
+            <p className="font-black text-lg" style={{color: item.colore}}>€{item.valore}</p>
+            <p className="text-[9px] text-gray-300 font-bold">
+              {item.label === 'Oggi' ? ordiniOggi.length : item.label === 'Settimana' ? ordiniSettimana.length : ordiniMese.length} ordini
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Andamento 7 giorni */}
+      <div className="bg-white rounded-[2rem] p-5 shadow-sm overflow-hidden">
+      <p className="text-[10px] font-black uppercase text-gray-400 mb-3 italic">🏆 Piatti più ordinati</p>
+        <div className="flex items-end gap-1 h-20">
+          {ordiniPerGiorno.map((g, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <span className="text-[8px] font-black text-[#2E7D32]">{g.count > 0 ? g.count : ''}</span>
+              <div className="w-full rounded-t-lg bg-[#2E7D32]/20 flex items-end" style={{height:'60px'}}>
+                <div className="w-full rounded-t-lg bg-[#2E7D32] transition-all" style={{height: `${(g.count/maxCount)*100}%`, minHeight: g.count > 0 ? '4px' : '0'}}></div>
+              </div>
+              <span className="text-[8px] font-bold text-gray-400 capitalize">{g.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Top piatti */}
+      <div className="bg-white rounded-[2rem] p-5 shadow-sm">
+        <p className="text-[10px] font-black uppercase text-gray-400 mb-3 italic">🏆 Piatti più ordinati</p>
+        {topPiatti.length === 0 && <p className="text-xs text-gray-300 text-center py-4">Nessun dato</p>}
+       {topPiatti.map(([nome, qty], i) => (
+  <div key={nome} className="flex justify-between items-start py-2 border-b border-gray-50 last:border-0">
+    <div className="flex items-start gap-2 min-w-0 mr-3" style={{flex: '1 1 0', width: 0}}>
+      <span className="text-[10px] font-black text-gray-300 shrink-0 mt-0.5">#{i+1}</span>
+      <span className="text-xs font-black uppercase leading-tight" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>{nome}</span>
+    </div>
+    <span className="bg-[#2E7D32]/10 text-[#2E7D32] text-[10px] font-black px-3 py-1 rounded-full shrink-0">{qty} pz</span>
+  </div>
+))}
+      </div>
+
+      {/* Orario di punta */}
+      <div className="bg-white rounded-[2rem] p-5 shadow-sm flex justify-between items-center">
+        <div>
+          <p className="text-[10px] font-black uppercase text-gray-400 italic">⏰ Orario di punta</p>
+          <p className="text-2xl font-black text-[#C9A97A] mt-1">{orarioPunta ? orarioPunta[0] : '--:--'}</p>
+        </div>
+        {orarioPunta && <span className="bg-[#C9A97A]/10 text-[#C9A97A] text-[10px] font-black px-3 py-2 rounded-full">{orarioPunta[1]} ordini</span>}
+      </div>
+
+      {/* Export CSV */}
+      <button onClick={exportCSV} className="w-full bg-[#111111] text-white py-5 rounded-[2rem] font-black uppercase italic text-xs flex items-center justify-center gap-3 shadow-xl">
+        <Download size={16}/> Esporta Ordini CSV
+      </button>
+    </div>
+  );
+})()}
         {adminTab === 'archivio' && ordiniArchivio.map(o => (<div key={o.id} className="p-4 rounded-2xl bg-white flex justify-between items-center mb-2"><div className="text-left leading-tight"><p className="font-bold text-sm">{o.cliente}</p><p className="text-[10px] text-gray-400 italic">{o.dettaglio}</p></div><button onClick={() => supabase.from('ordini').delete().eq('id', o.id).then(fetchOrdini)} className="text-red-300"><Trash2 size={16}/></button></div>))}
       </div>
     );
