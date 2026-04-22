@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
   Utensils, ChevronLeft, Plus, Minus, Eye,
-  CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power, TrendingUp, Download
+  CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power, TrendingUp, Download, BookOpen
 } from 'lucide-react';
 
 // --- CONFIGURAZIONE ---
@@ -503,9 +503,12 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   if (view === 'home') return (
     <div className="min-h-screen bg-[#EFEFED] p-6 text-left">
       <header className="flex justify-between items-center mb-10">
-        <div className="text-2xl font-bold tracking-tighter text-[#2E7D32]">mordi<span className="text-[#C9A97A] italic text-xl mx-0.5">e</span>fuggi</div>
-        <button onClick={() => setShowLoginModal(true)} className="p-2 bg-white rounded-full border shadow-sm"><Settings size={20}/></button>
-      </header>
+  <div className="text-2xl font-bold tracking-tighter text-[#2E7D32]">mordi<span className="text-[#C9A97A] italic text-xl mx-0.5">e</span>fuggi</div>
+  <div className="flex gap-2">
+    <button onClick={() => setView('guida')} className="px-3 py-2 bg-white rounded-full border shadow-sm text-[9px] font-black uppercase text-[#2E7D32] tracking-wide flex items-center gap-1"><BookOpen size={14}/> Guida</button>
+    <button onClick={() => setShowLoginModal(true)} className="p-2 bg-white rounded-full border shadow-sm"><Settings size={20}/></button>
+  </div>
+</header>
       {showLoginModal && (
         <div className="fixed inset-0 z-50 bg-[#111111]/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in">
           <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center relative shadow-2xl">
@@ -648,6 +651,171 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       </div> 
     );
   }
+if (view === 'guida') return (
+    <div className="min-h-screen bg-[#EFEFED] p-6 text-left">
+      <button onClick={() => setView('home')} className="mb-6 bg-white p-2 rounded-full border shadow-sm"><ChevronLeft size={24}/></button>
+      <h2 className="text-3xl font-black italic uppercase text-[#2E7D32] mb-2">Mini guida</h2>
+      <p className="text-xs text-gray-400 font-bold uppercase mb-8">Come usare l'app</p>
+      <div className="space-y-6">
 
+        {/* SEZIONE 1 — HOME */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-[#2E7D32]/10 p-3 rounded-2xl"><Utensils size={22} className="text-[#2E7D32]"/></div>
+            <div><p className="font-black text-sm uppercase">1. La home</p><p className="text-[10px] text-gray-400 font-bold">Da qui parti sempre</p></div>
+          </div>
+          <div className="space-y-2">
+            {[
+              { icon: '🍽️', tit: 'Menù del giorno', desc: 'Vedi i piatti disponibili oggi e aggiungi al vassoio' },
+              { icon: '🎉', tit: 'Catering & eventi', desc: 'Richiedi un preventivo per la tua occasione speciale' },
+              { icon: '📍', tit: 'Dove siamo', desc: 'Mappa e contatti del locale' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-3 items-start bg-[#EFEFED] rounded-2xl p-3">
+                <span className="text-xl">{item.icon}</span>
+                <div><p className="font-black text-xs uppercase">{item.tit}</p><p className="text-[10px] text-gray-500">{item.desc}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SEZIONE 2 — MENÙ */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-[#C9A97A]/10 p-3 rounded-2xl"><span className="text-[#C9A97A] text-xl">🥗</span></div>
+            <div><p className="font-black text-sm uppercase">2. Il menù del giorno</p><p className="text-[10px] text-gray-400 font-bold">Scegli i tuoi piatti</p></div>
+          </div>
+          <div className="space-y-3">
+            <div className="bg-[#EFEFED] rounded-2xl p-3">
+              <p className="font-black text-xs text-[#2E7D32] uppercase mb-1">Filtra per categoria</p>
+              <div className="flex gap-1 flex-wrap">
+                {['Tutti','Primi','Secondi','Contorni','Bevande'].map(c => (
+                  <span key={c} className="bg-white text-[9px] font-black px-2 py-1 rounded-full border border-gray-200">{c}</span>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2">Tocca una categoria per filtrare i piatti</p>
+            </div>
+            <div className="bg-[#EFEFED] rounded-2xl p-3">
+              <p className="font-black text-xs text-[#2E7D32] uppercase mb-1">Scheda piatto</p>
+              <div className="bg-white rounded-xl p-3 flex justify-between items-center">
+                <div>
+                  <p className="font-black text-xs uppercase">Lasagna classica</p>
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {['Glutine','Lattosio','Uova'].map(a => (
+                      <span key={a} className="text-[8px] font-bold text-gray-400 border border-gray-200 px-1 py-0.5 rounded">{a}</span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-1 items-center">
+                    <span className="text-[#2E7D32] font-black text-xs">€8.50</span>
+                    <span className="text-[9px] bg-gray-100 px-2 rounded-full font-bold text-gray-500">Disp: 7</span>
+                  </div>
+                </div>
+                <div className="w-9 h-9 bg-[#2E7D32] rounded-full flex items-center justify-center"><Plus size={18} className="text-white"/></div>
+              </div>
+              <div className="mt-2 space-y-1">
+                <p className="text-[10px] text-gray-600">🏷️ <span className="font-bold">Allergeni</span> — etichette grigie sotto il nome</p>
+                <p className="text-[10px] text-gray-600">📦 <span className="font-bold">Disp</span> — quantità ancora disponibile</p>
+                <p className="text-[10px] text-gray-600">➕ <span className="font-bold">Tocca il +</span> per aggiungere al vassoio</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SEZIONE 3 — VASSOIO */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-[#2E7D32]/10 p-3 rounded-2xl"><span className="text-[#2E7D32] text-xl">🛒</span></div>
+            <div><p className="font-black text-sm uppercase">3. Il vassoio</p><p className="text-[10px] text-gray-400 font-bold">Completa il tuo ordine</p></div>
+          </div>
+          <div className="space-y-2">
+            {[
+              { n:'1', col:'#2E7D32', tit:'Nome', desc:'Inserisci il tuo nome e cognome' },
+              { n:'2', col:'#2E7D32', tit:'Cellulare', desc:'Il tuo numero di telefono (es. 3331234567)' },
+              { n:'3', col:'#2E7D32', tit:'Orario ritiro', desc:'Scegli quando vuoi ritirare dal menu a tendina' },
+              { n:'4', col:'#C9A97A', tit:'Note (facoltativo)', desc:'Variazioni, quantità al peso, richieste speciali' },
+              { n:'5', col:'#C9A97A', tit:'Trattamento dati', desc:'Spunta la casella per accettare — obbligatorio' },
+            ].map((s, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white font-black text-[10px] shrink-0 mt-0.5" style={{background: s.col}}>{s.n}</div>
+                <div><p className="font-black text-xs uppercase">{s.tit}</p><p className="text-[10px] text-gray-500">{s.desc}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AVVISO 13:00 */}
+        <div className="bg-[#2E7D32] rounded-[2rem] p-6 shadow-xl">
+          <div className="flex items-center gap-3 mb-3">
+            <Clock size={28} className="text-[#C9A97A] shrink-0"/>
+            <p className="font-black text-white text-lg uppercase italic">Ordina entro le 13:00!</p>
+          </div>
+          <p className="text-white/80 text-xs font-bold leading-relaxed">Dopo le 13:00 i piatti potrebbero non essere più disponibili. Prenota in anticipo per avere la certezza del tuo piatto preferito. Puoi ritirare fino alle 15:00.</p>
+        </div>
+
+        {/* SEZIONE 4 — WHATSAPP */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-green-100 p-3 rounded-2xl"><span className="text-xl">💬</span></div>
+            <div><p className="font-black text-sm uppercase">4. Conferma su WhatsApp</p><p className="text-[10px] text-gray-400 font-bold">Passaggio fondamentale</p></div>
+          </div>
+          <p className="text-xs text-gray-600 mb-4 leading-relaxed">Dopo aver toccato <span className="font-black text-[#2E7D32]">ORDINA</span>, si apre WhatsApp con il riepilogo del tuo ordine già scritto. <span className="font-black">Devi solo toccare INVIA</span> — è la tua conferma d'ordine!</p>
+          <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-4">
+            <p className="font-black text-xs text-green-800 uppercase mb-2">Se WhatsApp non si apre automaticamente:</p>
+            <div className="space-y-3">
+              <div>
+                <p className="font-black text-[10px] text-gray-700 uppercase mb-1">📱 Android (Chrome)</p>
+                <div className="space-y-1">
+                  {['Tocca i 3 puntini in alto a destra nel browser','Vai su Impostazioni → Sito web → Popup e reindirizzamenti','Attiva "Consenti"','Torna sull\'app e riprova'].map((s,i) => (
+                    <div key={i} className="flex gap-2 items-start">
+                      <span className="text-[#C9A97A] font-black text-[10px] shrink-0">{i+1}.</span>
+                      <p className="text-[10px] text-gray-600">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-green-100 pt-3">
+                <p className="font-black text-[10px] text-gray-700 uppercase mb-1">🍎 iPhone (Safari)</p>
+                <div className="space-y-1">
+                  {['Vai su Impostazioni iPhone → Safari','Scorri fino a "Blocca popup"','Disattiva il blocco','Torna sull\'app e riprova'].map((s,i) => (
+                    <div key={i} className="flex gap-2 items-start">
+                      <span className="text-[#C9A97A] font-black text-[10px] shrink-0">{i+1}.</span>
+                      <p className="text-[10px] text-gray-600">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SEZIONE 5 — CATERING */}
+        <div className="bg-[#111111] rounded-[2rem] p-6 shadow-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-[#C9A97A]/20 p-3 rounded-2xl"><PartyPopper size={22} className="text-[#C9A97A]"/></div>
+            <div><p className="font-black text-sm uppercase text-white">5. Catering & eventi</p><p className="text-[10px] text-[#C9A97A] font-bold">Organizziamo noi per te</p></div>
+          </div>
+          <p className="text-white/70 text-xs leading-relaxed mb-4">Hai un'occasione speciale? Possiamo occuparci di tutto. Contattaci per un preventivo su misura!</p>
+          <div className="space-y-2">
+            {[
+              { icon:'👥', tit:'Cene tra amici', desc:'Menu personalizzato per serate in compagnia' },
+              { icon:'👨‍👩‍👧', tit:'Riunioni familiari', desc:'Pranzi e cene per ricorrenze e celebrazioni' },
+              { icon:'💼', tit:'Meeting aziendali', desc:'Catering professionale per eventi di lavoro' },
+              { icon:'🎊', tit:'Eventi speciali', desc:'Compleanni, anniversari e qualsiasi occasione' },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-3 items-start bg-white/5 rounded-2xl p-3">
+                <span className="text-lg shrink-0">{item.icon}</span>
+                <div><p className="font-black text-xs text-white uppercase">{item.tit}</p><p className="text-[10px] text-white/60">{item.desc}</p></div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 bg-[#C9A97A]/20 rounded-2xl p-3">
+            <p className="text-[#C9A97A] font-black text-xs uppercase">Come funziona</p>
+            <p className="text-white/70 text-[10px] mt-1 leading-relaxed">Tocca <span className="text-[#C9A97A] font-black">Catering & eventi</span> dalla home, compila il modulo con data e tipo di evento. Ti ricontattiamo noi con una proposta su misura!</p>
+          </div>
+        </div>
+
+        <div className="h-6"/>
+      </div>
+    </div>
+  );
   return null;
 }
