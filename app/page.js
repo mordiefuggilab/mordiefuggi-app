@@ -712,44 +712,18 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       <div className="grid grid-cols-1 gap-4">
         <div className="bg-white rounded-[2.5rem] flex items-center shadow-sm overflow-hidden">
           <button onClick={() => setView('menu')} className="flex-1 p-6 flex items-center gap-6"><div className="bg-[#2E7D32]/10 p-4 rounded-2xl text-[#2E7D32]"><Utensils size={32} /></div><div className="font-bold text-xl uppercase italic">Menù del Giorno</div></button>
-          <div className="flex gap-2 pr-4 items-center">
-            {/* UK */}
-            <button onClick={() => { setMenuLang('en'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="60" height="30" fill="#012169"/>
-                <path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/>
-                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
-                <path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/>
-                <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='en' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>EN</span>
-            </button>
-            {/* France */}
-            <button onClick={() => { setMenuLang('fr'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="1" height="2" fill="#002395"/>
-                <rect x="1" width="1" height="2" fill="#EDEDED"/>
-                <rect x="2" width="1" height="2" fill="#ED2939"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='fr' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>FR</span>
-            </button>
-            {/* Spain */}
-            <button onClick={() => { setMenuLang('es'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="3" height="2" fill="#c60b1e"/>
-                <rect y="0.5" width="3" height="1" fill="#ffc400"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='es' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>ES</span>
-            </button>
-            {/* Germany */}
-            <button onClick={() => { setMenuLang('de'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="5" height="1" fill="#000000"/>
-                <rect y="1" width="5" height="1" fill="#DD0000"/>
-                <rect y="2" width="5" height="1" fill="#FFCE00"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='de' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>DE</span>
-            </button>
+          <div className="grid grid-cols-2 gap-1 pr-3">
+            {[
+              {l:'en', svg: <svg width="28" height="17" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/><path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/><path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/></svg>},
+              {l:'fr', svg: <svg width="28" height="17" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}><rect width="1" height="2" fill="#002395"/><rect x="1" width="1" height="2" fill="#EDEDED"/><rect x="2" width="1" height="2" fill="#ED2939"/></svg>},
+              {l:'es', svg: <svg width="28" height="17" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}><rect width="3" height="2" fill="#c60b1e"/><rect y="0.5" width="3" height="1" fill="#ffc400"/></svg>},
+              {l:'de', svg: <svg width="28" height="17" viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}><rect width="5" height="1" fill="#000000"/><rect y="1" width="5" height="1" fill="#DD0000"/><rect y="2" width="5" height="1" fill="#FFCE00"/></svg>},
+            ].map(({l, svg}) => (
+              <button key={l} onClick={() => { setMenuLang(l); setView('menu'); }} className={`flex flex-col items-center gap-0.5 p-1 rounded-lg transition-all ${menuLang===l ? 'bg-green-50 ring-1 ring-[#2E7D32]' : 'hover:bg-gray-50'}`}>
+                {svg}
+                <span className={`text-[7px] font-black uppercase ${menuLang===l ? 'text-[#2E7D32]' : 'text-gray-300'}`}>{l.toUpperCase()}</span>
+              </button>
+            ))}
           </div>
         </div>
         <button onClick={() => setView('catering')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-[#C9A97A]/10 p-4 rounded-2xl text-[#C9A97A]"><PartyPopper size={32} /></div><div className="font-bold text-xl uppercase italic">Catering & Eventi</div></button>
