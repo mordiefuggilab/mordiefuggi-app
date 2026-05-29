@@ -19,11 +19,6 @@ const ADMIN_PASSWORD = "mordi2026";
 const CATEGORY_ORDER = { 'Primi': 1, 'Secondi': 2, 'Contorni': 3, 'Bevande': 4 };
 const CATEGORY_EMOJI = { 'Primi': '🍝', 'Secondi': '🍗', 'Contorni': '🥗', 'Bevande': '🥤', 'default': '🥘' };
 
-// --- TRADUZIONE DINAMICA VIA API (nessun dizionario statico) ---
-// Chiama /api/translate che usa MyMemory (gratuito, senza chiave)
-// Funziona automaticamente per qualsiasi piatto aggiunto su Supabase
-
-
 export default function MordieFuggiApp() {
   const [view, setView] = useState('home'); 
   const [cart, setCart] = useState([]);
@@ -46,11 +41,6 @@ export default function MordieFuggiApp() {
   const [newPiatto, setNewPiatto] = useState({ nome: '', prezzo: '', categoria: 'Primi', stock: 10, immagine: '🥘', allergeni: [] });
   
   const [candidatura, setCandidatura] = useState({ nome: '', telefono: '', messaggio: '' });
-
-  // --- LINGUA MENU ---
-  const [menuLang, setMenuLang] = useState('it'); // 'it' | 'en' | 'fr' | 'es'
-  const [translations, setTranslations] = useState({}); // { en: {id:nome}, fr: {id:nome}, es: {id:nome} }
-  const [isTranslating, setIsTranslating] = useState(false);
 
   const prevOrdiniCount = useRef(0);
 
@@ -119,39 +109,6 @@ export default function MordieFuggiApp() {
   };
 
   const getEmoji = (cat) => CATEGORY_EMOJI[cat] || CATEGORY_EMOJI.default;
-
-  const switchLang = async (lang) => {
-    if (lang === menuLang) { setMenuLang('it'); return; }
-    // Already cached for this language?
-    const cacheKey = lang;
-    if (translations[cacheKey]) { setMenuLang(lang); return; }
-    setIsTranslating(true);
-    try {
-      const piatti = piattiGiorno.filter(p => p.attivo).map(p => ({ id: p.id, nome: p.nome }));
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ piatti, lang })
-      });
-      const text = await res.text();
-      if (!text || text.trim() === '') throw new Error('Empty response from translate API');
-      const data = JSON.parse(text);
-      if (data.translations && data.translations.length > 0) {
-        const map = {};
-        data.translations.forEach(({ id, nome }) => { map[id] = nome; });
-        setTranslations(prev => ({ ...prev, [lang]: map }));
-        setMenuLang(lang);
-      }
-    } catch(e) {
-      console.error('Translation error', e);
-    }
-    setIsTranslating(false);
-  };
-
-  const getNome = (p) => {
-    if (menuLang === 'it' || !translations[menuLang]) return p.nome;
-    return translations[menuLang][p.id] || p.nome;
-  };
 
   const filteredAndSortedMenu = useMemo(() => {
     return piattiGiorno
@@ -548,44 +505,10 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   // --- VISTA MENU ---
   if (view === 'menu') return (
     <div className="min-h-screen bg-white p-6 pb-40 text-left">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={() => { setView('home'); setMenuLang('it'); }} className="flex items-center gap-2 text-[#606060] font-bold bg-[#EFEFED] px-4 py-2 rounded-full"><ChevronLeft size={20} /> Home</button>
-        <div className="flex gap-2">
-          {/* UK */}
-          <button onClick={() => switchLang('en')} disabled={isTranslating} className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl border transition-all hover:scale-105 ${menuLang==='en' ? 'border-[#2E7D32] shadow-md bg-green-50' : 'bg-white border-gray-200'} ${isTranslating ? 'opacity-50' : ''}`}>
-            <svg width="30" height="18" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}>
-              <rect width="60" height="30" fill="#012169"/>
-              <path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/>
-              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
-              <path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/>
-              <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
-            </svg>
-            <span className={`text-[8px] font-black uppercase ${menuLang==='en' ? 'text-[#2E7D32]' : 'text-gray-400'}`}>EN</span>
-          </button>
-          {/* France */}
-          <button onClick={() => switchLang('fr')} className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl border transition-all hover:scale-105 ${menuLang==='fr' ? 'border-[#2E7D32] shadow-md bg-green-50' : 'bg-white border-gray-200'}`}>
-            <svg width="30" height="18" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}>
-              <rect width="1" height="2" fill="#002395"/>
-              <rect x="1" width="1" height="2" fill="#EDEDED"/>
-              <rect x="2" width="1" height="2" fill="#ED2939"/>
-            </svg>
-            <span className={`text-[8px] font-black uppercase ${menuLang==='fr' ? 'text-[#2E7D32]' : 'text-gray-400'}`}>FR</span>
-          </button>
-          {/* Spain */}
-          <button onClick={() => switchLang('es')} className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl border transition-all hover:scale-105 ${menuLang==='es' ? 'border-[#2E7D32] shadow-md bg-green-50' : 'bg-white border-gray-200'}`}>
-            <svg width="30" height="18" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}>
-              <rect width="3" height="2" fill="#c60b1e"/>
-              <rect y="0.5" width="3" height="1" fill="#ffc400"/>
-            </svg>
-            <span className={`text-[8px] font-black uppercase ${menuLang==='es' ? 'text-[#2E7D32]' : 'text-gray-400'}`}>ES</span>
-          </button>
-        </div>
-      </div>
+      <button onClick={() => setView('home')} className="flex items-center gap-2 text-[#606060] mb-6 font-bold bg-[#EFEFED] px-4 py-2 rounded-full"><ChevronLeft size={20} /> Home</button>
       
       <div className="mb-6">
-        <p className="font-black text-2xl uppercase italic text-[#2E7D32]">
-          {menuLang === 'en' ? "Todays Menu" : menuLang === 'fr' ? "Menu du Jour" : menuLang === 'es' ? "Menú del Día" : "Menù del Giorno"}
-        </p>
+        <p className="font-black text-2xl uppercase italic text-[#2E7D32]">Menù del Giorno</p>
         {(() => {
           const ora = new Date();
           const giorno = ora.getDay();
@@ -651,7 +574,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
             <div className="flex gap-4 items-center">
               <span className="text-4xl">{getEmoji(p.categoria)}</span>
               <div className="text-left leading-tight">
-                <p className="font-black text-sm uppercase">{getNome(p)}</p>
+                <p className="font-black text-sm uppercase">{p.nome}</p>
                 {p.allergeni && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {p.allergeni.split(', ').map((all, idx) => (
@@ -701,41 +624,9 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       )}
       <h1 className="text-4xl font-extrabold mb-10 italic uppercase tracking-tighter leading-tight">Cucina fresca,<br />ritmo <span className="text-[#C9A97A]">veloce</span>.</h1>
       <div className="grid grid-cols-1 gap-4">
-        <div className="bg-white rounded-[2.5rem] flex items-center shadow-sm overflow-hidden">
-          <button onClick={() => setView('menu')} className="flex-1 p-6 flex items-center gap-6"><div className="bg-[#2E7D32]/10 p-4 rounded-2xl text-[#2E7D32]"><Utensils size={32} /></div><div className="font-bold text-xl uppercase italic">Menù del Giorno</div></button>
-          <div className="flex gap-2 pr-4 items-center">
-            {/* UK */}
-            <button onClick={() => { setMenuLang('en'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="60" height="30" fill="#012169"/>
-                <path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/>
-                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
-                <path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/>
-                <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='en' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>EN</span>
-            </button>
-            {/* France */}
-            <button onClick={() => { setMenuLang('fr'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="1" height="2" fill="#002395"/>
-                <rect x="1" width="1" height="2" fill="#EDEDED"/>
-                <rect x="2" width="1" height="2" fill="#ED2939"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='fr' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>FR</span>
-            </button>
-            {/* Spain */}
-            <button onClick={() => { setMenuLang('es'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
-              <svg width="32" height="20" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
-                <rect width="3" height="2" fill="#c60b1e"/>
-                <rect y="0.5" width="3" height="1" fill="#ffc400"/>
-              </svg>
-              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='es' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>ES</span>
-            </button>
-          </div>
-        </div>
+        <button onClick={() => setView('menu')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-[#2E7D32]/10 p-4 rounded-2xl text-[#2E7D32]"><Utensils size={32} /></div><div className="font-bold text-xl uppercase italic">Menù del Giorno</div></button>
         <button onClick={() => setView('catering')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-[#C9A97A]/10 p-4 rounded-2xl text-[#C9A97A]"><PartyPopper size={32} /></div><div className="font-bold text-xl uppercase italic">Catering & Eventi</div></button>
-        <button onClick={() => setView('contatti')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-gray-100 p-4 rounded-2xl text-gray-400"><MapPin size={32} /></div><div className="font-bold text-xl uppercase italic">Dove Siamo</div></button>
+        <button onClick={() => setView('contatti')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-gray-100 p-4 rounded-2xl text-gray-400"><MapPin size={32} /></div><div className="font-bold text-xl uppercase italic">Dove Siamo e contatti</div></button>
         <button onClick={() => setView('lavora')} className="bg-[#2E7D32] text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-xl mt-4"><div className="bg-white/10 p-4 rounded-2xl text-[#C9A97A]"><Briefcase size={32} /></div><div className="font-bold text-xl uppercase italic">Lavora con noi</div></button>
       </div>
     </div>
@@ -801,7 +692,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   if (view === 'contatti') return ( 
     <div className="min-h-screen bg-[#EFEFED] p-6 text-left animate-in fade-in"> 
       <button onClick={() => setView('home')} className="mb-6 bg-white p-2 rounded-full border border-[#DEDEDE]"><ChevronLeft size={24}/></button> 
-      <h2 className="text-3xl font-black mb-8 italic uppercase">Dove siamo</h2> 
+      <h2 className="text-3xl font-black mb-8 italic uppercase">Dove siamo e Contatti</h2> 
       <div className="space-y-6">
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-6"> 
           <div className="flex gap-4"> 
