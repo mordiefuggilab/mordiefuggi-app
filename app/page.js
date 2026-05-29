@@ -579,12 +579,21 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
             </svg>
             <span className={`text-[8px] font-black uppercase ${menuLang==='es' ? 'text-[#2E7D32]' : 'text-gray-400'}`}>ES</span>
           </button>
+          {/* Germany */}
+          <button onClick={() => switchLang('de')} className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl border transition-all hover:scale-105 ${menuLang==='de' ? 'border-[#2E7D32] shadow-md bg-green-50' : 'bg-white border-gray-200'}`}>
+            <svg width="30" height="18" viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:2,display:'block'}}>
+              <rect width="5" height="1" fill="#000000"/>
+              <rect y="1" width="5" height="1" fill="#DD0000"/>
+              <rect y="2" width="5" height="1" fill="#FFCE00"/>
+            </svg>
+            <span className={`text-[8px] font-black uppercase ${menuLang==='de' ? 'text-[#2E7D32]' : 'text-gray-400'}`}>DE</span>
+          </button>
         </div>
       </div>
       
       <div className="mb-6">
         <p className="font-black text-2xl uppercase italic text-[#2E7D32]">
-          {menuLang === 'en' ? "Todays Menu" : menuLang === 'fr' ? "Menu du Jour" : menuLang === 'es' ? "Menú del Día" : "Menù del Giorno"}
+          {menuLang === 'en' ? "Todays Menu" : menuLang === 'fr' ? "Menu du Jour" : menuLang === 'es' ? "Menú del Día" : menuLang === 'de' ? "Tagesmenü" : "Menù del Giorno"}
         </p>
         {(() => {
           const ora = new Date();
@@ -731,6 +740,15 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
                 <rect y="0.5" width="3" height="1" fill="#ffc400"/>
               </svg>
               <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='es' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>ES</span>
+            </button>
+            {/* Germany */}
+            <button onClick={() => { setMenuLang('de'); setView('menu'); }} className="flex flex-col items-center gap-1 group hover:scale-110 transition-transform">
+              <svg width="32" height="20" viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg" style={{borderRadius:3,display:'block'}}>
+                <rect width="5" height="1" fill="#000000"/>
+                <rect y="1" width="5" height="1" fill="#DD0000"/>
+                <rect y="2" width="5" height="1" fill="#FFCE00"/>
+              </svg>
+              <span className={`text-[8px] font-black uppercase transition-colors ${menuLang==='de' ? 'text-[#2E7D32]' : 'text-gray-300 group-hover:text-[#2E7D32]'}`}>DE</span>
             </button>
           </div>
         </div>
