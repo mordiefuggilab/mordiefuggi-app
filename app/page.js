@@ -544,8 +544,9 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   const giorniFa = (d) => Math.round((oggi - new Date(d)) / 86400000);
   const fissi = { Primi: [], Secondi: [] };
   const pool = { Primi: [], Secondi: [] };
+  const FISSI_MANUALI = ['SALSICCIA E PATATE'];
   Object.values(info).forEach(p => {
-    if (p.count / giorniTot >= 0.8) fissi[p.cat].push(p);
+    if (p.count / giorniTot >= 0.8 || FISSI_MANUALI.includes(norm(p.nome))) fissi[p.cat].push(p);
     else pool[p.cat].push(p);
   });
   const ordina = (a, b) => giorniFa(b.ultima) - giorniFa(a.ultima) || a.count - b.count;
