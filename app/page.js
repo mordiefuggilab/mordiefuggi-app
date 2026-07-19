@@ -32,6 +32,7 @@ export default function MordieFuggiApp() {
   const [ordini, setOrdini] = useState([]);
   const [richiesteCatering, setRichiesteCatering] = useState([]);
   const [adminTab, setAdminTab] = useState('live');
+  const [storicoMenu, setStoricoMenu] = useState(null);
   const [activeFilter, setActiveFilter] = useState("Tutti");
   const [adminCategoryFilter, setAdminCategoryFilter] = useState("Tutti");
   const [searchQuery, setSearchQuery] = useState("");
@@ -116,6 +117,11 @@ export default function MordieFuggiApp() {
   const fetchCatering = async () => {
     const { data } = await supabase.from('richieste_catering').select('*').order('created_at', { ascending: false });
     if (data) setRichiesteCatering(data);
+  };
+
+  const fetchStorico = async () => {
+    const { data } = await supabase.from('storico_menu').select('data, piatto_nome, categoria').order('data', { ascending: true });
+    if (data) setStoricoMenu(data);
   };
 
   const getEmoji = (cat) => CATEGORY_EMOJI[cat] || CATEGORY_EMOJI.default;
@@ -248,6 +254,7 @@ export default function MordieFuggiApp() {
           <button onClick={() => setAdminTab('catering')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'catering' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><ClipboardList size={14}/> Catering</button>
           <button onClick={() => setAdminTab('archivio')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'archivio' ? 'bg-[#C9A97A] text-white shadow-md' : 'text-gray-500'}`}><History size={14}/> Archivio</button>
           <button onClick={() => setAdminTab('statistiche')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'statistiche' ? 'bg-[#2196F3] text-white shadow-md' : 'text-gray-500'}`}>📊 Stats</button>
+          <button onClick={() => { setAdminTab('consigliato'); if (!storicoMenu) fetchStorico(); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'consigliato' ? 'bg-[#7B1FA2] text-white shadow-md' : 'text-gray-500'}`}>🗓️ Menù</button>
         </div>
 
         {adminTab === 'live' && (
@@ -502,6 +509,93 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       <button onClick={exportCSV} className="w-full bg-[#111111] text-white py-5 rounded-[2rem] font-black uppercase italic text-xs flex items-center justify-center gap-3 shadow-xl">
         <Download size={16}/> Esporta Ordini CSV
       </button>
+    </div>
+  );
+})()}
+        {adminTab === 'consigliato' && (() => {
+  if (!storicoMenu) return <p className="text-center text-xs font-black uppercase text-gray-400 py-10">Carico lo storico...</p>;
+  const norm = (s) => s.toUpperCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
+  const info = {};
+  const dateSet = new Set();
+  storicoMenu.forEach(r => {
+    if (r.categoria !== 'Primi' && r.categoria !== 'Secondi') return;
+    dateSet.add(r.data);
+    const n = norm(r.piatto_nome);
+    if (!info[n]) info[n] = { nome: r.piatto_nome.trim(), cat: r.categoria, count: 0, ultima: '' };
+    info[n].count++;
+    if (r.data > info[n].ultima) info[n].ultima = r.data;
+  });
+  const giorniTot = dateSet.size;
+  if (giorniTot < 10) return <p className="text-center text-xs font-black uppercase text-gray-400 py-10">Servono almeno 10 giorni di storico (attuali: {giorniTot}). Continua a salvare il menu ogni giorno!</p>;
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  const giorniFa = (d) => Math.round((oggi - new Date(d)) / 86400000);
+  const fissi = { Primi: [], Secondi: [] };
+  const pool = { Primi: [], Secondi: [] };
+  Object.values(info).forEach(p => {
+    if (p.count / giorniTot >= 0.8) fissi[p.cat].push(p);
+    else pool[p.cat].push(p);
+  });
+  const ordina = (a, b) => giorniFa(b.ultima) - giorniFa(a.ultima) || a.count - b.count;
+  pool.Primi.sort(ordina);
+  pool.Secondi.sort(ordina);
+  const isFreddo = (p) => /FREDD/.test(norm(p.nome));
+  const isPesce = (p) => /MARE|MERLUZZO|ORATA|SPADA|SALMONE|SEPPI|CALAMAR|GAMBER|TONNO|SGOMBRO|PESCE|PLATESSA|CERNIA|COZZE|VONGOLE|POLPO|PESCATORA/.test(norm(p.nome));
+  const estate = (oggi.getMonth() + 1) >= 5 && (oggi.getMonth() + 1) <= 9;
+  const dow = oggi.getDay();
+  const lun = new Date(oggi);
+  lun.setDate(oggi.getDate() + ((dow === 0 || dow === 6) ? ((8 - dow) % 7) : (1 - dow)));
+  const usati = new Set();
+  const settimana = [];
+  for (let g = 0; g < 5; g++) {
+    const dataG = new Date(lun); dataG.setDate(lun.getDate() + g);
+    const scegli = (cat, target) => {
+      const sel = [...fissi[cat]];
+      let freddi = sel.filter(isFreddo).length;
+      let pesci = sel.filter(isPesce).length;
+      for (const p of pool[cat]) {
+        if (sel.length >= target) break;
+        if (usati.has(norm(p.nome))) continue;
+        if (isFreddo(p) && (!estate || freddi >= 2)) continue;
+        if (cat === 'Secondi' && isPesce(p) && pesci >= 4) continue;
+        if (cat === 'Secondi' && !isPesce(p) && (sel.length - pesci) >= 4) continue;
+        sel.push(p); usati.add(norm(p.nome));
+        if (isFreddo(p)) freddi++;
+        if (isPesce(p)) pesci++;
+      }
+      for (const p of pool[cat]) {
+        if (sel.length >= target) break;
+        if (usati.has(norm(p.nome)) || sel.includes(p)) continue;
+        sel.push(p); usati.add(norm(p.nome));
+      }
+      return sel;
+    };
+    settimana.push({ data: dataG, Primi: scegli('Primi', 7), Secondi: scegli('Secondi', 7) });
+  }
+  const fissiSet = new Set([...fissi.Primi, ...fissi.Secondi].map(p => norm(p.nome)));
+  return (
+    <div className="space-y-6">
+      <div className="bg-[#7B1FA2]/10 rounded-[2rem] p-5">
+        <p className="text-[10px] font-black uppercase text-[#7B1FA2] italic mb-1">🗓️ Menù consigliato della settimana</p>
+        <p className="text-[10px] font-bold text-gray-500 leading-relaxed">Calcolato su {giorniTot} giornate archiviate. Criterio: rientrano prima i piatti fermi da più tempo e usati più raramente. I piatti fissi restano tutti i giorni.</p>
+      </div>
+      {settimana.map((g, i) => (
+        <div key={i} className="bg-white rounded-[2rem] p-5 shadow-sm">
+          <p className="font-black text-sm uppercase italic text-[#7B1FA2] mb-3 capitalize">{g.data.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          {['Primi', 'Secondi'].map(cat => (
+            <div key={cat} className="mb-3">
+              <p className="text-[9px] font-black uppercase text-[#C9A97A] italic mb-1">{getEmoji(cat)} {cat}</p>
+              {g[cat].map((p, j) => (
+                <div key={j} className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0">
+                  <span className="text-[11px] font-bold uppercase leading-tight mr-2">{p.nome}</span>
+                  {fissiSet.has(norm(p.nome))
+                    ? <span className="text-[8px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-full shrink-0">FISSO</span>
+                    : giorniFa(p.ultima) > 13 && <span className="text-[8px] font-black text-[#7B1FA2] bg-[#7B1FA2]/10 px-2 py-0.5 rounded-full shrink-0">fermo da {giorniFa(p.ultima)}gg</span>}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 })()}
