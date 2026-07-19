@@ -543,7 +543,8 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   const estate = (oggi.getMonth() + 1) >= 5 && (oggi.getMonth() + 1) <= 9;
   const dow = oggi.getDay();
   const lun = new Date(oggi);
-  lun.setDate(oggi.getDate() + ((dow === 0 || dow === 6) ? ((8 - dow) % 7) : (1 - dow)));
+  const venerdiPomeriggio = dow === 5 && new Date().getHours() >= 15;
+  lun.setDate(oggi.getDate() + ((dow === 0 || dow === 6 || venerdiPomeriggio) ? ((8 - dow) % 7) : (1 - dow)));
   const usati = new Set();
   const settimana = [];
   for (let g = 0; g < 5; g++) {
