@@ -44,7 +44,7 @@ export default function MordieFuggiApp() {
   const [loginPass, setLoginPass] = useState("");
 
   const [userData, setUserData] = useState({ nome: '', telefono: '', orario: '', note: '' });
-  const [newPiatto, setNewPiatto] = useState({ nome: '', prezzo: '', categoria: 'Primi', stock: 10, immagine: '🥘', allergeni: [] });
+  const [newPiatto, setNewPiatto] = useState({ nome: '', prezzo: '', categoria: 'Primi', stock: 10, immagine: '🥘', allergeni: [], stagione: 'neutro' });
   
   const [candidatura, setCandidatura] = useState({ nome: '', telefono: '', messaggio: '' });
 
@@ -193,6 +193,12 @@ export default function MordieFuggiApp() {
     if (!error) fetchPiatti();
   };
 
+  const cycleStagione = async (id, current) => {
+    const next = current === 'estivo' ? 'invernale' : current === 'invernale' ? 'neutro' : 'estivo';
+    const { error } = await supabase.from('piatti').update({ stagione: next }).eq('id', id);
+    if (!error) fetchPiatti();
+  };
+
   const handleToggleVisibility = async (id, currentStatus) => {
     const { error } = await supabase.from('piatti').update({ attivo: !currentStatus }).eq('id', id);
     if (!error) fetchPiatti();
@@ -281,6 +287,11 @@ export default function MordieFuggiApp() {
                   ))}
                 </div>
               </div>
+              <div className="flex gap-2 mb-4">
+                {[['neutro','N'],['estivo','E'],['invernale','I']].map(([val, label]) => (
+                  <button key={val} onClick={() => setNewPiatto({...newPiatto, stagione: val})} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase border transition-all ${newPiatto.stagione === val ? (val === 'estivo' ? 'bg-[#F9A825] text-white border-transparent' : val === 'invernale' ? 'bg-[#2196F3] text-white border-transparent' : 'bg-[#111111] text-white border-transparent') : 'bg-gray-50 text-gray-400 border-gray-100'}`}>{label}</button>
+                ))}
+              </div>
               <div className="grid grid-cols-2 gap-3 mb-4"><input type="number" placeholder="Prezzo" className="p-4 bg-gray-50 rounded-2xl font-bold shadow-inner outline-none" value={newPiatto.prezzo} onChange={e => setNewPiatto({...newPiatto, prezzo: e.target.value})} /><input type="number" placeholder="Stock" className="p-4 bg-gray-50 rounded-2xl font-bold shadow-inner outline-none" value={newPiatto.stock} onChange={e => setNewPiatto({...newPiatto, stock: e.target.value})} /></div>
               
               <button onClick={async () => { 
@@ -292,12 +303,13 @@ export default function MordieFuggiApp() {
                     stock: parseInt(newPiatto.stock),
                     allergeni: newPiatto.allergeni.join(", "),
                     attivo: true,
-                    immagine: '🥘'
+                    immagine: '🥘',
+                    stagione: newPiatto.stagione
                   };
                   const { error } = await supabase.from('piatti').insert([payload]);
                   if (!error) {
                     await fetchPiatti();
-                    setNewPiatto({nome:'', prezzo:'', categoria:'Primi', stock:10, immagine:'🥘', allergeni:[]});
+                    setNewPiatto({nome:'', prezzo:'', categoria:'Primi', stock:10, immagine:'🥘', allergeni:[], stagione:'neutro'});
                   } else {
                     alert("Errore inserimento!");
                   }
@@ -348,6 +360,7 @@ export default function MordieFuggiApp() {
                       <p className="font-black text-xs uppercase leading-tight">{p.nome}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-[9px] font-black text-[#C9A97A] uppercase">{p.categoria}</p>
+                        <button onClick={() => cycleStagione(p.id, p.stagione)} className={`w-6 h-6 rounded-lg text-[10px] font-black shadow-sm transition-all ${p.stagione === 'estivo' ? 'bg-[#F9A825] text-white' : p.stagione === 'invernale' ? 'bg-[#2196F3] text-white' : 'bg-gray-200 text-gray-500'}`}>{p.stagione === 'estivo' ? 'E' : p.stagione === 'invernale' ? 'I' : 'N'}</button>
                         <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded-xl">
                           <button onClick={() => handleUpdateStock(p.id, p.stock, -1)} className="p-1 text-red-500 hover:bg-white rounded-md shadow-sm transition-all"><Minus size={12} /></button>
                           <span className="text-[10px] font-black w-6 text-center">{p.stock}</span>
@@ -541,6 +554,12 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   const isFreddo = (p) => /FREDD/.test(norm(p.nome));
   const isPesce = (p) => /MARE|MERLUZZO|ORATA|SPADA|SALMONE|SEPPI|CALAMAR|GAMBER|TONNO|SGOMBRO|PESCE|PLATESSA|CERNIA|COZZE|VONGOLE|POLPO|PESCATORA/.test(norm(p.nome));
   const estate = (oggi.getMonth() + 1) >= 5 && (oggi.getMonth() + 1) <= 9;
+  const stagioneDi = {};
+  piattiGiorno.forEach(p => { if (p.nome) stagioneDi[norm(p.nome)] = p.stagione || 'neutro'; });
+  const fuoriStagione = (p) => {
+    const st = stagioneDi[norm(p.nome)] || 'neutro';
+    return estate ? st === 'invernale' : st === 'estivo';
+  };
   const dow = oggi.getDay();
   const lun = new Date(oggi);
   const venerdiPomeriggio = dow === 5 && new Date().getHours() >= 15;
@@ -556,6 +575,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       for (const p of pool[cat]) {
         if (sel.length >= target) break;
         if (usati.has(norm(p.nome))) continue;
+        if (fuoriStagione(p)) continue;
         if (isFreddo(p) && (!estate || freddi >= 2)) continue;
         if (cat === 'Secondi' && isPesce(p) && pesci >= 4) continue;
         if (cat === 'Secondi' && !isPesce(p) && (sel.length - pesci) >= 4) continue;
@@ -565,7 +585,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       }
       for (const p of pool[cat]) {
         if (sel.length >= target) break;
-        if (usati.has(norm(p.nome)) || sel.includes(p)) continue;
+        if (usati.has(norm(p.nome)) || sel.includes(p) || fuoriStagione(p)) continue;
         sel.push(p); usati.add(norm(p.nome));
       }
       return sel;
