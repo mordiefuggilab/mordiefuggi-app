@@ -289,7 +289,7 @@ export default function MordieFuggiApp() {
               </div>
               <div className="flex gap-2 mb-4">
                 {[['neutro','N'],['estivo','E'],['invernale','I']].map(([val, label]) => (
-                  <button key={val} onClick={() => setNewPiatto({...newPiatto, stagione: val})} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase border transition-all ${newPiatto.stagione === val ? (val === 'estivo' ? 'bg-[#F9A825] text-white border-transparent' : val === 'invernale' ? 'bg-[#2196F3] text-white border-transparent' : 'bg-[#111111] text-white border-transparent') : 'bg-gray-50 text-gray-400 border-gray-100'}`}>{label}</button>
+                  <button key={val} onClick={() => setNewPiatto({...newPiatto, stagione: val})} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase border transition-all ${newPiatto.stagione === val ? (val === 'estivo' ? 'bg-[#FFB74D] text-white border-transparent' : val === 'invernale' ? 'bg-[#81D4FA] text-white border-transparent' : 'bg-gray-300 text-gray-600 border-transparent') : 'bg-gray-50 text-gray-400 border-gray-100'}`}>{label}</button>
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4"><input type="number" placeholder="Prezzo" className="p-4 bg-gray-50 rounded-2xl font-bold shadow-inner outline-none" value={newPiatto.prezzo} onChange={e => setNewPiatto({...newPiatto, prezzo: e.target.value})} /><input type="number" placeholder="Stock" className="p-4 bg-gray-50 rounded-2xl font-bold shadow-inner outline-none" value={newPiatto.stock} onChange={e => setNewPiatto({...newPiatto, stock: e.target.value})} /></div>
@@ -360,7 +360,7 @@ export default function MordieFuggiApp() {
                       <p className="font-black text-xs uppercase leading-tight">{p.nome}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-[9px] font-black text-[#C9A97A] uppercase">{p.categoria}</p>
-                        <button onClick={() => cycleStagione(p.id, p.stagione)} className={`w-6 h-6 rounded-lg text-[10px] font-black shadow-sm transition-all ${p.stagione === 'estivo' ? 'bg-[#F9A825] text-white' : p.stagione === 'invernale' ? 'bg-[#2196F3] text-white' : 'bg-gray-200 text-gray-500'}`}>{p.stagione === 'estivo' ? 'E' : p.stagione === 'invernale' ? 'I' : 'N'}</button>
+                        <button onClick={() => cycleStagione(p.id, p.stagione)} className={`w-6 h-6 rounded-lg text-[10px] font-black shadow-sm transition-all ${p.stagione === 'estivo' ? 'bg-[#FFB74D] text-white' : p.stagione === 'invernale' ? 'bg-[#81D4FA] text-white' : 'bg-gray-300 text-gray-600'}`}>{p.stagione === 'estivo' ? 'E' : p.stagione === 'invernale' ? 'I' : 'N'}</button>
                         <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded-xl">
                           <button onClick={() => handleUpdateStock(p.id, p.stock, -1)} className="p-1 text-red-500 hover:bg-white rounded-md shadow-sm transition-all"><Minus size={12} /></button>
                           <span className="text-[10px] font-black w-6 text-center">{p.stock}</span>
