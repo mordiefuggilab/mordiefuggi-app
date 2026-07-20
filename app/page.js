@@ -33,6 +33,7 @@ export default function MordieFuggiApp() {
   const [richiesteCatering, setRichiesteCatering] = useState([]);
   const [adminTab, setAdminTab] = useState('live');
   const [storicoMenu, setStoricoMenu] = useState(null);
+  const [variante, setVariante] = useState(0);
   const [activeFilter, setActiveFilter] = useState("Tutti");
   const [adminCategoryFilter, setAdminCategoryFilter] = useState("Tutti");
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,7 +261,7 @@ export default function MordieFuggiApp() {
           <button onClick={() => setAdminTab('catering')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'catering' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><ClipboardList size={14}/> Catering</button>
           <button onClick={() => setAdminTab('archivio')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'archivio' ? 'bg-[#C9A97A] text-white shadow-md' : 'text-gray-500'}`}><History size={14}/> Archivio</button>
           <button onClick={() => setAdminTab('statistiche')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'statistiche' ? 'bg-[#2196F3] text-white shadow-md' : 'text-gray-500'}`}>📊 Stats</button>
-          <button onClick={() => { setAdminTab('consigliato'); if (!storicoMenu) fetchStorico(); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'consigliato' ? 'bg-[#7B1FA2] text-white shadow-md' : 'text-gray-500'}`}>🗓️ Menù</button>
+          <button onClick={() => { setAdminTab('consigliato'); fetchStorico(); fetchPiatti(); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'consigliato' ? 'bg-[#7B1FA2] text-white shadow-md' : 'text-gray-500'}`}>🗓️ Menù</button>
         </div>
 
         {adminTab === 'live' && (
@@ -527,78 +528,130 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
 })()}
         {adminTab === 'consigliato' && (() => {
   if (!storicoMenu) return <p className="text-center text-xs font-black uppercase text-gray-400 py-10">Carico lo storico...</p>;
-  const norm = (s) => s.toUpperCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
-  const info = {};
-  const dateSet = new Set();
+
+  // --- normalizzazione e confronto nomi (tollera varianti di scrittura) ---
+  const norm = (s) => (s || '').toUpperCase().replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim();
+  const STOP = ['CON','E','DI','AL','ALLA','ALLO','AI','ALLE','LA','IL','LO','GLI','LE','IN','DA','DEL','DELLA','DEI','DELLE','ED','SU','PER','UN','UNA','SENZ','AGLIO'];
+  const sig = (s) => new Set(norm(s).replace(/[^A-ZÀÈÉÌÒÙ ]/g, ' ').split(' ').filter(w => w.length > 2 && !STOP.includes(w)).map(w => w.slice(0, 5)));
+  const jac = (a, b) => { if (!a.size || !b.size) return 0; let i = 0; a.forEach(x => { if (b.has(x)) i++; }); return i / (a.size + b.size - i); };
+
+  // --- giornate archiviate (il campione) ---
+  const giorni = [...new Set(storicoMenu.map(r => r.data))].sort();
+  const giorniTot = giorni.length;
+  if (giorniTot < 10) return <p className="text-center text-xs font-black uppercase text-gray-400 py-10">Servono almeno 10 giorni di storico (attuali: {giorniTot}). Continua a salvare il menu ogni giorno!</p>;
+  const idxData = {}; giorni.forEach((d, i) => { idxData[d] = i; });
+
+  // --- candidati: SOLO piatti presenti oggi in archivio, senza righe duplicate ---
+  const visti = {}, cand = [];
+  piattiGiorno.filter(p => p.categoria === 'Primi' || p.categoria === 'Secondi').forEach(p => {
+    const k = norm(p.nome) + '|' + p.categoria;
+    if (visti[k]) return;
+    visti[k] = 1;
+    cand.push({ nome: (p.nome || '').trim(), cat: p.categoria, stag: p.stagione || 'neutro', sig: sig(p.nome), count: 0, ultimaIdx: -1 });
+  });
+
+  // --- statistiche: ogni riga di storico viene attribuita al piatto attuale piu simile ---
   storicoMenu.forEach(r => {
     if (r.categoria !== 'Primi' && r.categoria !== 'Secondi') return;
-    dateSet.add(r.data);
-    const n = norm(r.piatto_nome);
-    if (!info[n]) info[n] = { nome: r.piatto_nome.trim(), cat: r.categoria, count: 0, ultima: '' };
-    info[n].count++;
-    if (r.data > info[n].ultima) info[n].ultima = r.data;
+    const rs = sig(r.piatto_nome), rn = norm(r.piatto_nome);
+    let best = null, bs = 0;
+    cand.forEach(c => {
+      if (c.cat !== r.categoria) return;
+      const sc = norm(c.nome) === rn ? 1 : jac(c.sig, rs);
+      if (sc > bs) { bs = sc; best = c; }
+    });
+    if (best && bs >= 0.8) {
+      best.count++;
+      const i = idxData[r.data];
+      if (i > best.ultimaIdx) best.ultimaIdx = i;
+    }
   });
-  const giorniTot = dateSet.size;
-  if (giorniTot < 10) return <p className="text-center text-xs font-black uppercase text-gray-400 py-10">Servono almeno 10 giorni di storico (attuali: {giorniTot}). Continua a salvare il menu ogni giorno!</p>;
-  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
-  const giorniFa = (d) => Math.round((oggi - new Date(d)) / 86400000);
-  const fissi = { Primi: [], Secondi: [] };
-  const pool = { Primi: [], Secondi: [] };
+  cand.forEach(c => { c.riposo = c.ultimaIdx < 0 ? null : (giorniTot - 1 - c.ultimaIdx); });
+
+  // --- fissi e pool ---
   const FISSI_MANUALI = ['SALSICCIA E PATATE'];
-  Object.values(info).forEach(p => {
-    if (p.count / giorniTot >= 0.8 || FISSI_MANUALI.includes(norm(p.nome))) fissi[p.cat].push(p);
-    else pool[p.cat].push(p);
-  });
-  const ordina = (a, b) => giorniFa(b.ultima) - giorniFa(a.ultima) || a.count - b.count;
-  pool.Primi.sort(ordina);
-  pool.Secondi.sort(ordina);
+  const TARGET = 7, SIMILE = 0.62;
+  const mese = new Date().getMonth() + 1, estate = mese >= 5 && mese <= 9;
+  const fissi = { Primi: [], Secondi: [] }, pool = { Primi: [], Secondi: [] };
+  cand.forEach(p => { ((p.count / giorniTot >= 0.8) || FISSI_MANUALI.includes(norm(p.nome)) ? fissi : pool)[p.cat].push(p); });
+
+  const fuoriStag = (p) => estate ? p.stag === 'invernale' : p.stag === 'estivo';
   const isFreddo = (p) => /FREDD/.test(norm(p.nome));
-  const isPesce = (p) => /MARE|MERLUZZO|ORATA|SPADA|SALMONE|SEPPI|CALAMAR|GAMBER|TONNO|SGOMBRO|PESCE|PLATESSA|CERNIA|COZZE|VONGOLE|POLPO|PESCATORA/.test(norm(p.nome));
-  const estate = (oggi.getMonth() + 1) >= 5 && (oggi.getMonth() + 1) <= 9;
-  const stagioneDi = {};
-  piattiGiorno.forEach(p => { if (p.nome) stagioneDi[norm(p.nome)] = p.stagione || 'neutro'; });
-  const fuoriStagione = (p) => {
-    const st = stagioneDi[norm(p.nome)] || 'neutro';
-    return estate ? st === 'invernale' : st === 'estivo';
+  const isPesce = (p) => /MARE|MERLUZZ|ORATA|SPADA|SALMON|SEPPI|CALAMAR|GAMBER|TONNO|SGOMBR|PESCE|PLATESS|CERNIA|COZZE|VONGOL|POLPO|PESCATOR|ACCIUG|BACCAL|ALICI|SARDE|SCAMPI|MOSCARD|TOTAN|ARSELL/.test(norm(p.nome));
+  const FAM_P = [['FORNO', /LASAGN|CANNELLON|SARTU|CONCHIGLION|AL FORNO|GRATIN|MOUSSAK|PARMIGIAN/, 2], ['RISO', /RISO|RISOTT|ORZO|FARRO|COUS|PAELLA|TAJEDDH|QUINOA/, 2], ['GNOCCHI', /GNOCCH/, 1]];
+  const FAM_S = [/SCALOPPIN/, /POLPETTON/, /POLPETT/, /STRACCETT/, /ARISTA|ARROSTO|ROLLE/, /INVOLTIN/, /SPIEDIN|ARROSTICIN/, /BOMBETT/, /COTOLETT|SCHIACCIATIN/, /MERLUZZ/, /ORATA/, /SPADA/, /SALMON/, /SEPPI/, /CALAMAR|TOTAN|MOSCARD/, /GAMBER/, /TONNO/, /SGOMBR/, /PLATESS/, /POLLO/, /SALSICC/, /MAIALE|CAPOCOLL|SPEZZATIN/];
+  const famP = (p) => { const n = norm(p.nome); for (const f of FAM_P) if (f[1].test(n)) return f[0]; return 'PASTA'; };
+  const limP = (k) => { const f = FAM_P.find(x => x[0] === k); return f ? f[2] : 3; };
+  const famS = (p) => { const n = norm(p.nome); for (let i = 0; i < FAM_S.length; i++) if (FAM_S[i].test(n)) return 'S' + i; return null; };
+
+  // --- ordine: alterna piatti mai proposti e piatti fermi da piu tempo ---
+  const ordina = (arr) => {
+    const mai = arr.filter(p => p.riposo === null).sort((a, b) => a.nome.localeCompare(b.nome));
+    const vis = arr.filter(p => p.riposo !== null).sort((a, b) => b.riposo - a.riposo || a.count - b.count || a.nome.localeCompare(b.nome));
+    const out = []; let i = 0, j = 0;
+    while (i < mai.length || j < vis.length) { if (j < vis.length) out.push(vis[j++]); if (i < mai.length) out.push(mai[i++]); }
+    if (!out.length) return out;
+    const k = (variante * 2) % out.length;
+    return out.slice(k).concat(out.slice(0, k));
   };
+  pool.Primi = ordina(pool.Primi); pool.Secondi = ordina(pool.Secondi);
+
+  // --- costruzione settimana lun-ven, senza ripetizioni ---
+  const usati = [];
+  const dup = (p) => usati.some(u => jac(u, p.sig) >= SIMILE);
+  const marca = (p) => usati.push(p.sig);
+  [...fissi.Primi, ...fissi.Secondi].forEach(marca);
+
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
   const dow = oggi.getDay();
+  const venDopo15 = dow === 5 && new Date().getHours() >= 15;
   const lun = new Date(oggi);
-  const venerdiPomeriggio = dow === 5 && new Date().getHours() >= 15;
-  lun.setDate(oggi.getDate() + ((dow === 0 || dow === 6 || venerdiPomeriggio) ? ((8 - dow) % 7) : (1 - dow)));
-  const usati = new Set();
+  lun.setDate(oggi.getDate() + ((dow === 0 || dow === 6 || venDopo15) ? ((8 - dow) % 7) : (1 - dow)));
+
   const settimana = [];
   for (let g = 0; g < 5; g++) {
     const dataG = new Date(lun); dataG.setDate(lun.getDate() + g);
-    const scegli = (cat, target) => {
-      const sel = [...fissi[cat]];
-      let freddi = sel.filter(isFreddo).length;
-      let pesci = sel.filter(isPesce).length;
-      for (const p of pool[cat]) {
-        if (sel.length >= target) break;
-        if (usati.has(norm(p.nome))) continue;
-        if (fuoriStagione(p)) continue;
-        if (isFreddo(p) && (!estate || freddi >= 2)) continue;
-        if (cat === 'Secondi' && isPesce(p) && pesci >= 4) continue;
-        if (cat === 'Secondi' && !isPesce(p) && (sel.length - pesci) >= 4) continue;
-        sel.push(p); usati.add(norm(p.nome));
+    const scegli = (cat) => {
+      const sel = [...fissi[cat]], fam = {};
+      let freddi = sel.filter(isFreddo).length, pesci = sel.filter(isPesce).length;
+      sel.forEach(p => { const k = cat === 'Primi' ? famP(p) : famS(p); if (k) fam[k] = (fam[k] || 0) + 1; });
+      const prova = (p, rigido) => {
+        if (dup(p) || fuoriStag(p)) return false;
+        const k = cat === 'Primi' ? famP(p) : famS(p);
+        if (rigido) {
+          if (isFreddo(p) && (!estate || freddi >= 2)) return false;
+          if (cat === 'Secondi') {
+            if (isPesce(p) && pesci >= 4) return false;
+            if (!isPesce(p) && (sel.length - pesci) >= 4) return false;
+            if (k && (fam[k] || 0) >= 1) return false;
+          } else if (k && (fam[k] || 0) >= limP(k)) return false;
+        }
+        sel.push(p); marca(p);
         if (isFreddo(p)) freddi++;
         if (isPesce(p)) pesci++;
-      }
-      for (const p of pool[cat]) {
-        if (sel.length >= target) break;
-        if (usati.has(norm(p.nome)) || sel.includes(p) || fuoriStagione(p)) continue;
-        sel.push(p); usati.add(norm(p.nome));
-      }
+        if (k) fam[k] = (fam[k] || 0) + 1;
+        return true;
+      };
+      for (const p of pool[cat]) { if (sel.length >= TARGET) break; prova(p, true); }
+      for (const p of pool[cat]) { if (sel.length >= TARGET) break; prova(p, false); }
       return sel;
     };
-    settimana.push({ data: dataG, Primi: scegli('Primi', 7), Secondi: scegli('Secondi', 7) });
+    settimana.push({ data: dataG, Primi: scegli('Primi'), Secondi: scegli('Secondi') });
   }
+
   const fissiSet = new Set([...fissi.Primi, ...fissi.Secondi].map(p => norm(p.nome)));
+  const fmt = (d) => new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+
   return (
     <div className="space-y-6">
       <div className="bg-[#7B1FA2]/10 rounded-[2rem] p-5">
         <p className="text-[10px] font-black uppercase text-[#7B1FA2] italic mb-1">🗓️ Menù consigliato della settimana</p>
-        <p className="text-[10px] font-bold text-gray-500 leading-relaxed">Calcolato su {giorniTot} giornate archiviate. Criterio: rientrano prima i piatti fermi da più tempo e usati più raramente. I piatti fissi restano tutti i giorni.</p>
+        <p className="text-[10px] font-bold text-gray-500 leading-relaxed">
+          Campione: <b>{giorniTot} giornate archiviate</b> ({fmt(giorni[0])} → {fmt(giorni[giorni.length - 1])}) su <b>{cand.length} piatti</b> in archivio.
+          Rientrano prima i piatti fermi da più tempo e quelli mai proposti. Nessun piatto si ripete nella settimana.
+        </p>
+        <p className="text-[9px] font-bold text-gray-400 mt-2 italic">“riposo N” = N giornate di servizio archiviate dall’ultima volta che è stato proposto.</p>
+        <button onClick={() => setVariante(variante + 1)} className="mt-3 w-full bg-[#7B1FA2] text-white py-3 rounded-2xl font-black uppercase italic text-[10px] shadow-md">🔄 Genera un’altra proposta</button>
       </div>
       {settimana.map((g, i) => (
         <div key={i} className="bg-white rounded-[2rem] p-5 shadow-sm">
@@ -611,7 +664,9 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
                   <span className="text-[11px] font-bold uppercase leading-tight mr-2">{p.nome}</span>
                   {fissiSet.has(norm(p.nome))
                     ? <span className="text-[8px] font-black text-green-600 bg-green-50 px-2 py-0.5 rounded-full shrink-0">FISSO</span>
-                    : giorniFa(p.ultima) > 13 && <span className="text-[8px] font-black text-[#7B1FA2] bg-[#7B1FA2]/10 px-2 py-0.5 rounded-full shrink-0">fermo da {giorniFa(p.ultima)}gg</span>}
+                    : p.riposo === null
+                      ? <span className="text-[8px] font-black text-[#C9A97A] bg-[#C9A97A]/10 px-2 py-0.5 rounded-full shrink-0">mai proposto</span>
+                      : <span className="text-[8px] font-black text-[#7B1FA2] bg-[#7B1FA2]/10 px-2 py-0.5 rounded-full shrink-0">riposo {p.riposo}</span>}
                 </div>
               ))}
             </div>
