@@ -4,7 +4,7 @@
 // I testi sono gli stessi del menù stampato: se cambia un piatto o un prezzo, va cambiato qui.
 // La card in homepage sparisce da sola il 2 gennaio 2027 (decisione di Sandro).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, Phone, MessageCircle, Download, CalendarDays, Plus, Minus, CheckCircle, ShoppingBag } from 'lucide-react';
 
 export const VIGILIE_FINE = new Date('2027-01-02T00:00:00+01:00');
@@ -92,12 +92,13 @@ function Quantita({ q, onAdd, onRemove, disabled }) {
   );
 }
 
-export function VigilieView({ onBack }) {
+export function VigilieView({ onBack, onEvento = () => {} }) {
   const [step, setStep] = useState('menu'); // 'menu' | 'vassoio' | 'inviato'
   const [qta, setQta] = useState({});       // { nomePiatto: quantità }
   const [cliente, setCliente] = useState({ nome: '', telefono: '', vigilia: '', note: '' });
   const [privacy, setPrivacy] = useState(false);
 
+  useEffect(() => { onEvento('vigilie'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const ora = new Date();
   const aperte = DATE.filter(d => ora < d.chiusura);
   const prenotabile = aperte.length > 0;
@@ -131,6 +132,7 @@ export function VigilieView({ onBack }) {
       '📲 Invia questo messaggio: la prenotazione è valida dopo la nostra conferma.',
     ].join('\n');
     window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(testo)}`, '_blank');
+    if (step !== 'inviato') onEvento('vigilie_whatsapp');
     vai('inviato');
   };
 
