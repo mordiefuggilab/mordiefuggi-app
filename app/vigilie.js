@@ -57,8 +57,6 @@ const DATE = [
   { id: 'capodanno', festa: 'Vigilia di Capodanno', ritiro: 'giovedì 31 dicembre', entro: '29 dicembre',
     giorno: '31/12', chiusura: new Date('2026-12-30T00:00:00+01:00') },
 ];
-// Orari di ritiro proposti nel vassoio (il ritiro è entro le 16:00).
-const ORARI_RITIRO = ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
 
 const euro = (n) => '€ ' + n.toFixed(2).replace('.', ',');
 const prezzoNum = (p) => parseFloat(p.prezzo.replace(',', '.'));
@@ -97,7 +95,7 @@ function Quantita({ q, onAdd, onRemove, disabled }) {
 export function VigilieView({ onBack }) {
   const [step, setStep] = useState('menu'); // 'menu' | 'vassoio' | 'inviato'
   const [qta, setQta] = useState({});       // { nomePiatto: quantità }
-  const [cliente, setCliente] = useState({ nome: '', telefono: '', vigilia: '', orario: '', note: '' });
+  const [cliente, setCliente] = useState({ nome: '', telefono: '', vigilia: '', note: '' });
   const [privacy, setPrivacy] = useState(false);
 
   const ora = new Date();
@@ -114,13 +112,13 @@ export function VigilieView({ onBack }) {
     return next;
   });
   const vig = DATE.find(d => d.id === cliente.vigilia);
-  const valido = righe.length && cliente.nome.trim() && cliente.telefono.trim() && vig && ora < vig.chiusura && cliente.orario && privacy;
+  const valido = righe.length && cliente.nome.trim() && cliente.telefono.trim() && vig && ora < vig.chiusura && privacy;
   const vai = (s) => { setStep(s); window.scrollTo(0, 0); };
 
   const invia = () => {
     const testo = [
       '*PRENOTAZIONE · MENÙ DELLE VIGILIE*',
-      `🎄 ${vig.festa}: ritiro ${vig.ritiro} alle ${cliente.orario}`,
+      `🎄 ${vig.festa}: ritiro ${vig.ritiro} entro le 16:00`,
       `👤 ${cliente.nome.trim()}`,
       `📞 ${cliente.telefono.trim()}`,
       '',
@@ -145,7 +143,7 @@ export function VigilieView({ onBack }) {
         <p className="text-sm font-bold text-gray-500 mt-3">Invia il messaggio che si è aperto su WhatsApp: ti rispondiamo noi per confermare la prenotazione.</p>
         <p className="text-xs text-gray-400 mt-3">WhatsApp non si è aperto? Chiamaci al {TELEFONO}.</p>
         <button onClick={invia} className="mt-6 w-full bg-[#2E7D32] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2"><MessageCircle size={16} /> Riapri WhatsApp</button>
-        <button onClick={() => { setQta({}); setCliente({ nome: '', telefono: '', vigilia: '', orario: '', note: '' }); setPrivacy(false); onBack(); }} className="mt-3 w-full bg-[#EFEFED] py-4 rounded-2xl font-black uppercase text-xs">Torna alla Home</button>
+        <button onClick={() => { setQta({}); setCliente({ nome: '', telefono: '', vigilia: '', note: '' }); setPrivacy(false); onBack(); }} className="mt-3 w-full bg-[#EFEFED] py-4 rounded-2xl font-black uppercase text-xs">Torna alla Home</button>
       </div>
     </div>
   );
@@ -182,15 +180,11 @@ export function VigilieView({ onBack }) {
                   <button key={d.id} disabled={chiusa} onClick={() => setCliente({ ...cliente, vigilia: d.id })}
                     className={`p-4 rounded-2xl text-left border-2 transition-all ${chiusa ? 'opacity-40 border-transparent bg-gray-50' : sel ? 'border-[#1B4332] bg-[#1B4332] text-white' : 'border-transparent bg-gray-50'}`}>
                     <p className="font-black text-xs uppercase italic">{d.festa}</p>
-                    <p className={`text-[11px] mt-1 ${sel ? 'text-white/80' : 'text-gray-400'}`}>{chiusa ? 'Prenotazioni chiuse' : `Ritiro ${d.giorno}`}</p>
+                    <p className={`text-[11px] mt-1 ${sel ? 'text-white/80' : 'text-gray-400'}`}>{chiusa ? 'Prenotazioni chiuse' : `Ritiro ${d.giorno} entro le 16:00`}</p>
                   </button>
                 );
               })}
             </div>
-            <select className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none appearance-none" value={cliente.orario} onChange={(e) => setCliente({ ...cliente, orario: e.target.value })}>
-              <option value="">Orario di ritiro</option>
-              {ORARI_RITIRO.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
             <input type="text" placeholder="Nome e cognome" className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" value={cliente.nome} onChange={(e) => setCliente({ ...cliente, nome: e.target.value })} />
             <input type="tel" placeholder="Cellulare" className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" value={cliente.telefono} onChange={(e) => setCliente({ ...cliente, telefono: e.target.value })} />
             <textarea placeholder="Note (allergie, richieste particolari...)" className="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none resize-none h-24 text-sm" value={cliente.note} onChange={(e) => setCliente({ ...cliente, note: e.target.value })} />
