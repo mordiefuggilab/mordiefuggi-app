@@ -7,6 +7,7 @@ import {
   CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power, TrendingUp, Download, BookOpen
 } from 'lucide-react';
 import { VigilieCard, VigilieView, vigilieAttivo } from './vigilie';
+import { VisiteAdmin, registraEvento } from './visite';
 
 // --- CONFIGURAZIONE ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvqjifmulwtdmmaqsxom.supabase.co';
@@ -56,6 +57,8 @@ export default function MordieFuggiApp() {
   const [isTranslating, setIsTranslating] = useState(false);
 
   const prevOrdiniCount = useRef(0);
+
+  useEffect(() => { registraEvento(supabase, 'visita', { unaVoltaPerSessione: true }); }, []);
 
   useEffect(() => { 
     fetchPiatti(); 
@@ -257,12 +260,13 @@ export default function MordieFuggiApp() {
 }} className="w-full mb-8 bg-[#C9A97A] text-white py-4 rounded-[2rem] font-black uppercase italic text-xs flex items-center justify-center gap-3 shadow-xl">
   📸 Salva menu di oggi x le statistiche
 </button>
-        <div className="flex gap-2 mb-6 bg-gray-200 p-1 rounded-2xl">
+        <div className="flex flex-wrap gap-1 mb-6 bg-gray-200 p-1 rounded-2xl [&>button]:basis-[31%]">
           <button onClick={() => setAdminTab('live')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'live' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><Clock size={14}/> Live</button>
           <button onClick={() => setAdminTab('catering')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'catering' ? 'bg-[#2E7D32] text-white shadow-md' : 'text-gray-500'}`}><ClipboardList size={14}/> Catering</button>
           <button onClick={() => setAdminTab('archivio')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'archivio' ? 'bg-[#C9A97A] text-white shadow-md' : 'text-gray-500'}`}><History size={14}/> Archivio</button>
           <button onClick={() => setAdminTab('statistiche')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'statistiche' ? 'bg-[#2196F3] text-white shadow-md' : 'text-gray-500'}`}>📊 Stats</button>
           <button onClick={() => { setAdminTab('consigliato'); fetchStorico(); fetchPiatti(); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'consigliato' ? 'bg-[#7B1FA2] text-white shadow-md' : 'text-gray-500'}`}>🗓️ Menù</button>
+          <button onClick={() => setAdminTab('visite')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 ${adminTab === 'visite' ? 'bg-[#111111] text-white shadow-md' : 'text-gray-500'}`}><Eye size={14}/> Visite</button>
         </div>
 
         {adminTab === 'live' && (
@@ -384,6 +388,7 @@ export default function MordieFuggiApp() {
             </div>
           </>
         )}
+        {adminTab === 'visite' && <VisiteAdmin supabase={supabase} />}
         {adminTab === 'catering' && richiesteCatering.map(r => (
           <div key={r.id} className="p-5 rounded-[2rem] bg-white shadow-sm border-l-8 border-[#C9A97A] mb-4">
             <p className="font-black text-sm uppercase">{r.referente}</p>
@@ -860,7 +865,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
   );
 
   // --- VISTA MENÙ DELLE VIGILIE ---
-  if (view === 'vigilie') return <VigilieView onBack={() => setView('home')} />;
+  if (view === 'vigilie') return <VigilieView onBack={() => setView('home')} onEvento={(t) => registraEvento(supabase, t)} />;
 
   // --- VISTA HOME ---
   if (view === 'home') return (
