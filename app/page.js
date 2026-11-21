@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { VigilieCard, VigilieView, vigilieAttivo } from './vigilie';
 import { VisiteAdmin, registraEvento } from './visite';
+import { ArchivioStats } from './archivio-stats';
 
 // --- CONFIGURAZIONE ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvqjifmulwtdmmaqsxom.supabase.co';
@@ -682,6 +683,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
     </div>
   );
 })()}
+        {adminTab === 'archivio' && <ArchivioStats supabase={supabase} aggiorna={ordini.length} />}
         {adminTab === 'archivio' && ordiniArchivio.map(o => (<div key={o.id} className="p-4 rounded-2xl bg-white flex justify-between items-center mb-2"><div className="text-left leading-tight"><p className="font-bold text-sm">{o.cliente}</p><p className="text-[10px] text-gray-400 italic">{o.dettaglio}</p></div><button onClick={() => supabase.from('ordini').delete().eq('id', o.id).then(fetchOrdini)} className="text-red-300"><Trash2 size={16}/></button></div>))}
       </div>
     );
