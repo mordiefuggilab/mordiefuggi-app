@@ -6,6 +6,7 @@ import {
   Utensils, ChevronLeft, Plus, Minus, Eye,
   CheckCircle, Settings, MapPin, Phone, Clock, PartyPopper, Briefcase, Trash2, ClipboardList, History, Lock, Power, TrendingUp, Download, BookOpen
 } from 'lucide-react';
+import { VigilieCard, VigilieView, vigilieAttivo } from './vigilie';
 
 // --- CONFIGURAZIONE ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvqjifmulwtdmmaqsxom.supabase.co';
@@ -858,6 +859,9 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
     </div>
   );
 
+  // --- VISTA MENÙ DELLE VIGILIE ---
+  if (view === 'vigilie') return <VigilieView onBack={() => setView('home')} />;
+
   // --- VISTA HOME ---
   if (view === 'home') return (
     <div className="min-h-screen bg-[#EFEFED] p-6 text-left">
@@ -881,6 +885,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
       )}
       <h1 className="text-4xl font-extrabold mb-10 italic uppercase tracking-tighter leading-tight">Cucina fresca,<br />ritmo <span className="text-[#C9A97A]">veloce</span>.</h1>
       <div className="grid grid-cols-1 gap-4">
+        {vigilieAttivo() && <VigilieCard onOpen={() => { setView('vigilie'); window.scrollTo(0, 0); }} />}
         <div className="bg-white rounded-[2.5rem] flex items-center shadow-sm overflow-hidden">
           <button onClick={() => setView('menu')} className="flex-1 p-6 flex items-center gap-6"><div className="bg-[#2E7D32]/10 p-4 rounded-2xl text-[#2E7D32]"><Utensils size={32} /></div><div className="font-bold text-xl uppercase italic">Menù del Giorno</div></button>
           <div className="grid grid-cols-2 gap-1 pr-3">
