@@ -2,12 +2,12 @@
 
 // Menù d'asporto delle Vigilie (Natale e Capodanno 2026).
 // I testi sono gli stessi del menù stampato: se cambia un piatto o un prezzo, va cambiato qui.
-// La card in homepage sparisce da sola dopo l'ultimo ritiro (31/12/2026 ore 16:00).
+// La card in homepage sparisce da sola il 2 gennaio 2027 (decisione di Sandro).
 
 import { useState } from 'react';
 import { ChevronLeft, Phone, MessageCircle, Download, CalendarDays, Plus, Minus, CheckCircle, ShoppingBag } from 'lucide-react';
 
-export const VIGILIE_FINE = new Date('2026-12-31T16:00:00+01:00');
+export const VIGILIE_FINE = new Date('2027-01-02T00:00:00+01:00');
 export const vigilieAttivo = (ora = new Date()) => ora < VIGILIE_FINE;
 
 const TELEFONO = '347 7725848';
