@@ -44,7 +44,7 @@ export function temaNatale(v) {
   if (v === 1) return { root: 'bg-[#EEF2EF]', h1: '', logo: '', card: '' };
   if (v === 2) return { root: 'bg-[#F7F1E6] pt-16', h1: '', logo: '', card: '' };
   if (v === 3) return {
-    root: 'bg-[#123524]',
+    root: 'bg-[#21573D]',
     h1: 'text-white',
     logo: '!text-white',
     card: 'ring-2 ring-[#C9A97A]/70',
@@ -184,7 +184,7 @@ function DecorNotte() {
         <path className="mf-stella" transform="translate(336 64)" d="M0 -14 L3.5 -3.5 L14 0 L3.5 3.5 L0 14 L-3.5 3.5 L-14 0 L-3.5 -3.5 Z" fill="#C9A97A" />
       </svg>
       <svg viewBox="0 0 390 120" preserveAspectRatio="none" className="fixed bottom-0 inset-x-0 w-full h-[110px] -z-10 pointer-events-none" aria-hidden="true">
-        <path d="M0 70 Q90 30 190 66 T390 52 V120 H0 Z" fill="#1F4D36" />
+        <path d="M0 70 Q90 30 190 66 T390 52 V120 H0 Z" fill="#2F6B4C" />
         <path d="M0 92 Q110 58 220 90 T390 84 V120 H0 Z" fill="#E8EFEA" opacity="0.92" />
       </svg>
       <Neve quanti={20} colore="#FFFFFF" opacita={0.8} />
