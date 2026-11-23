@@ -3,7 +3,8 @@
 // Vestito di Natale della homepage (tre ipotesi grafiche da far scegliere a Sandro).
 //
 // NATALE_SCELTA: l'ipotesi che va online (1, 2 o 3). null = homepage normale.
-// Le decorazioni si spengono da sole il 7 gennaio 2027 (dopo l'Epifania),
+// Le decorazioni si accendono da sole il 1° dicembre 2026 e si spengono da sole
+// il 7 gennaio 2027 (dopo l'Epifania),
 // senza toccare il codice. La card del Menù delle Vigilie ha la sua scadenza (2/1/2027).
 //
 // Solo nelle anteprime (non in produzione) compare in basso un selettore
@@ -11,32 +12,37 @@
 
 import { useEffect, useState } from 'react';
 
-export const NATALE_SCELTA = null;
-export const NATALE_INIZIO = new Date('2026-11-01T00:00:00+01:00');
+export const NATALE_SCELTA = 3; // scelta di Sandro (23/11/2026): "Notte di Natale"
+export const NATALE_INIZIO = new Date('2026-12-01T00:00:00+01:00');
 export const NATALE_FINE = new Date('2027-01-07T00:00:00+01:00');
 export const nataleAttivo = (ora = new Date()) => ora >= NATALE_INIZIO && ora < NATALE_FINE;
 
-const ANTEPRIMA = process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production';
+// Anteprima = non produzione e non il dominio vero (doppia sicurezza).
+const isAnteprima = () =>
+  process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production' &&
+  !window.location.hostname.endsWith('mordiefuggilecce.com');
 
 export function useNatale() {
-  const [v, setV] = useState(0);
+  const [stato, setStato] = useState({ v: 0, anteprima: false });
   useEffect(() => {
     let scelta = NATALE_SCELTA || 0;
-    if (ANTEPRIMA) {
+    let forzata = false;
+    const ant = isAnteprima();
+    if (ant) {
       const p = new URLSearchParams(window.location.search).get('natale');
-      if (p !== null && ['0', '1', '2', '3'].includes(p)) scelta = Number(p);
+      if (p !== null && ['0', '1', '2', '3'].includes(p)) { scelta = Number(p); forzata = true; }
     }
     // Letto dopo il primo disegno: la pagina è statica e la data/URL esistono solo nel browser.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setV(nataleAttivo() ? scelta : 0);
+    setStato({ v: (forzata ? new Date() < NATALE_FINE : nataleAttivo()) ? scelta : 0, anteprima: ant });
   }, []);
   const cambia = (n) => {
-    setV(n);
+    setStato((s) => ({ ...s, v: n }));
     const url = new URL(window.location.href);
     url.searchParams.set('natale', String(n));
     window.history.replaceState(null, '', url);
   };
-  return [v, cambia];
+  return [stato.v, cambia, stato.anteprima];
 }
 
 // Classi da applicare alla homepage per ogni ipotesi.
@@ -213,8 +219,8 @@ export function AuguriNatale({ v }) {
 }
 
 // Selettore visibile solo nelle anteprime, per provare le ipotesi dal telefono.
-export function SelettoreNatale({ v, onCambia }) {
-  if (!ANTEPRIMA || !nataleAttivo()) return null;
+export function SelettoreNatale({ v, onCambia, anteprima }) {
+  if (!anteprima || new Date() >= NATALE_FINE) return null;
   const voci = [[0, 'Senza'], [1, 'Ipotesi 1'], [2, 'Ipotesi 2'], [3, 'Ipotesi 3']];
   return (
     <div className="fixed bottom-3 inset-x-3 z-40 bg-[#111111]/90 backdrop-blur rounded-2xl p-1.5 flex gap-1 shadow-2xl">

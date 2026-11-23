@@ -30,7 +30,7 @@ const CATEGORY_EMOJI = { 'Primi': '🍝', 'Secondi': '🍗', 'Contorni': '🥗',
 
 export default function MordieFuggiApp() {
   const [view, setView] = useState('home'); 
-  const [natale, setNatale] = useNatale();
+  const [natale, setNatale, natalePreview] = useNatale();
   const tema = temaNatale(natale);
   const [cart, setCart] = useState([]);
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -923,7 +923,7 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
         <button onClick={() => setView('contatti')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-gray-100 p-4 rounded-2xl text-gray-400"><MapPin size={32} /></div><div className="font-bold text-xl uppercase italic">Dove Siamo</div></button>
         <button onClick={() => setView('lavora')} className={`bg-[#2E7D32] text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-xl mt-4 ${tema.card}`}><div className="bg-white/10 p-4 rounded-2xl text-[#C9A97A]"><Briefcase size={32} /></div><div className="font-bold text-xl uppercase italic">Lavora con noi</div></button>
       </div>
-      <SelettoreNatale v={natale} onCambia={setNatale} />
+      <SelettoreNatale v={natale} onCambia={setNatale} anteprima={natalePreview} />
       {natale > 0 && <div className="h-16" aria-hidden="true" />}
     </div>
   );
