@@ -63,11 +63,11 @@ const prezzoNum = (p) => parseFloat(p.prezzo.replace(',', '.'));
 const unita = (p, q) => (p.dettaglio?.startsWith('intera') ? (q === 1 ? 'quiche intera' : 'quiche intere') : (q === 1 ? 'porzione' : 'porzioni'));
 
 // Card della homepage, nello stile delle altre card ma con la foto della tavolata.
-export function VigilieCard({ onOpen }) {
+export function VigilieCard({ onOpen, className = '' }) {
   return (
     <button
       onClick={onOpen}
-      className="relative overflow-hidden rounded-[2.5rem] shadow-xl text-left text-white bg-[#1B4332] min-h-[180px]"
+      className={`relative overflow-hidden rounded-[2.5rem] shadow-xl text-left text-white bg-[#1B4332] min-h-[180px] ${className}`}
       aria-label="Apri il Menù delle Vigilie di Natale e Capodanno"
     >
       <img src="/vigilie/cena.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />

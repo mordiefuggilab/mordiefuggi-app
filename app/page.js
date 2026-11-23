@@ -9,6 +9,7 @@ import {
 import { VigilieCard, VigilieView, vigilieAttivo } from './vigilie';
 import { VisiteAdmin, registraEvento } from './visite';
 import { ArchivioStats } from './archivio-stats';
+import { useNatale, temaNatale, NataleDecor, AuguriNatale, SelettoreNatale, Cappellino } from './natale';
 
 // --- CONFIGURAZIONE ---
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gvqjifmulwtdmmaqsxom.supabase.co';
@@ -29,6 +30,8 @@ const CATEGORY_EMOJI = { 'Primi': '🍝', 'Secondi': '🍗', 'Contorni': '🥗',
 
 export default function MordieFuggiApp() {
   const [view, setView] = useState('home'); 
+  const [natale, setNatale, natalePreview] = useNatale();
+  const tema = temaNatale(natale);
   const [cart, setCart] = useState([]);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [piattiGiorno, setPiattiGiorno] = useState([]);
@@ -871,9 +874,13 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
 
   // --- VISTA HOME ---
   if (view === 'home') return (
-    <div className="min-h-screen bg-[#EFEFED] p-6 text-left">
+    <div className={`min-h-screen p-6 text-left relative isolate ${tema.root}`}>
+      <NataleDecor v={natale} />
       <header className="flex justify-between items-center mb-10">
-  <div className="text-2xl font-bold tracking-tighter text-[#2E7D32]">mordi<span className="text-[#C9A97A] italic text-xl mx-0.5">e</span>fuggi</div>
+  <div className={`relative text-2xl font-bold tracking-tighter text-[#2E7D32] ${tema.logo}`}>
+    {natale === 1 && <Cappellino className="absolute -top-[17px] -left-[11px] w-[30px] -rotate-[22deg]" />}
+    mordi<span className="relative text-[#C9A97A] italic text-xl mx-0.5">{natale === 3 && <Cappellino className="absolute -top-[19px] -left-[4px] w-[24px] rotate-[14deg]" />}e</span>fuggi
+  </div>
   <div className="flex gap-2">
     <button onClick={() => setView('guida')} className="px-3 py-2 bg-white rounded-full border shadow-sm text-[9px] font-black uppercase text-[#2E7D32] tracking-wide flex items-center gap-1"><BookOpen size={14}/> Guida</button>
     <button onClick={() => setShowLoginModal(true)} className="p-2 bg-white rounded-full border shadow-sm"><Settings size={20}/></button>
@@ -890,9 +897,12 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
           </div>
         </div>
       )}
-      <h1 className="text-4xl font-extrabold mb-10 italic uppercase tracking-tighter leading-tight">Cucina fresca,<br />ritmo <span className="text-[#C9A97A]">veloce</span>.</h1>
+      <AuguriNatale v={natale} />
+      <h1 className={`text-4xl font-extrabold mb-10 italic uppercase tracking-tighter leading-tight ${tema.h1}`}>
+        {natale === 2 ? <span className="relative inline-block"><Cappellino className="absolute -top-[22px] -left-[14px] w-[38px] -rotate-[20deg]" />C</span> : 'C'}ucina fresca,<br />ritmo <span className="text-[#C9A97A]">veloce</span>.
+      </h1>
       <div className="grid grid-cols-1 gap-4">
-        {vigilieAttivo() && <VigilieCard onOpen={() => { setView('vigilie'); window.scrollTo(0, 0); }} />}
+        {vigilieAttivo() && <VigilieCard className={tema.card} onOpen={() => { setView('vigilie'); window.scrollTo(0, 0); }} />}
         <div className="bg-white rounded-[2.5rem] flex items-center shadow-sm overflow-hidden">
           <button onClick={() => setView('menu')} className="flex-1 p-6 flex items-center gap-6"><div className="bg-[#2E7D32]/10 p-4 rounded-2xl text-[#2E7D32]"><Utensils size={32} /></div><div className="font-bold text-xl uppercase italic">Menù del Giorno</div></button>
           <div className="grid grid-cols-2 gap-1 pr-3">
@@ -911,8 +921,10 @@ const topPiatti = Object.entries(conteggiopiatti).sort((a,b) => b[1]-a[1]).slice
         </div>
         <button onClick={() => setView('catering')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-[#C9A97A]/10 p-4 rounded-2xl text-[#C9A97A]"><PartyPopper size={32} /></div><div className="font-bold text-xl uppercase italic">Catering & Eventi</div></button>
         <button onClick={() => setView('contatti')} className="bg-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-sm"><div className="bg-gray-100 p-4 rounded-2xl text-gray-400"><MapPin size={32} /></div><div className="font-bold text-xl uppercase italic">Dove Siamo</div></button>
-        <button onClick={() => setView('lavora')} className="bg-[#2E7D32] text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-xl mt-4"><div className="bg-white/10 p-4 rounded-2xl text-[#C9A97A]"><Briefcase size={32} /></div><div className="font-bold text-xl uppercase italic">Lavora con noi</div></button>
+        <button onClick={() => setView('lavora')} className={`bg-[#2E7D32] text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-xl mt-4 ${tema.card}`}><div className="bg-white/10 p-4 rounded-2xl text-[#C9A97A]"><Briefcase size={32} /></div><div className="font-bold text-xl uppercase italic">Lavora con noi</div></button>
       </div>
+      <SelettoreNatale v={natale} onCambia={setNatale} anteprima={natalePreview} />
+      {natale > 0 && <div className="h-16" aria-hidden="true" />}
     </div>
   );
 
